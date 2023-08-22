@@ -21,7 +21,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(
-    command_prefix="!",
+    command_prefix=config['prefix'],
     intents=intents,
 )
 
@@ -43,10 +43,7 @@ async def on_ready():
         await bot.tree.sync()
         print(f'Synced commands')
 
-
-
     print(f'Logged in as {bot.user}')
-
 
 
 if __name__ == '__main__':
