@@ -123,11 +123,19 @@ class ConfirmButtons(discord.ui.View):
         if interaction.user.id != self.author.id or not player or self.expected_player != player[0]:
             return
 
-        last_embed = interaction.message.embeds[0]
+        embed = interaction.message.embeds[0]
 
-        self.score.add_to_db()
-        last_embed.set_author(name="Score added!", icon_url=last_embed.author.icon_url)
-        await interaction.response.edit_message(embed=last_embed, view=None)
+        if self.score.add_to_db(keep_highest=True):
+            embed.set_author(name="Score added!", icon_url=embed.author.icon_url)
+        else:
+            embed.set_author(name="Score not added", icon_url=embed.author.icon_url)
+
+            error_message = f'''Higher PP score exists for this beatmap and mod combo
+            If you need to overwrite the score, use **/add_score**'''
+
+            embed.set_field_at(0, name="", value=error_message)
+
+        await interaction.response.edit_message(embed=embed, view=None)
 
     @discord.ui.button(
         label="Ignore",
@@ -201,7 +209,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
                 accuracy = row['acc']
                 pp = row['raw pp']
 
-                beatmap, beatmap_set = await UserScore.get_beatmap_and_beatmap_set(beatmap_id)
+                beatmap, beatmap_set = await ScoreBeatmap.get_beatmap_and_beatmap_set(beatmap_id)
                 score = UserScore(context.author.id, ScoreMods(mods=mods), pp, accuracy, row['combo'].split('/')[0], ar,
                                   cs, speed, beatmap, beatmap_set)
                 score.add_to_db()
@@ -285,31 +293,34 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
             rs_message = context.channel.last_message
 
         if not rs_message.embeds:
-            return await context.message.add_reaction("🏃‍♂️")
+            return
 
         score_embed = rs_message.embeds[0]
         score_info = score_embed.description[1:].split('▸')
 
         if score_info[0][12] == 'F':
-            return await context.message.add_reaction("🏃‍♂️")
+            return
 
         pp = float(re.findall("\d+.\d+PP", score_info[1])[0][:-2])
         accuracy = float(re.findall("\d+.\d+%", score_info[2])[0][:-1])
         combo = int(re.findall("x\d+/", score_info[4])[0][1:-1])
 
         beatmap_id = score_embed.author.url.split('/')[-1]
+        if "No Mod" in score_embed.author.name:
+            mods = ""
+        else:
+            mods = re.findall("] \+[a-zA-Z]+ \[", score_embed.author.name)[0][3:-2]
 
-        mods = re.findall("] \+[A-Z]+ \[", score_embed.author.name)[0][3:-2]
+        mods = ScoreMods(mods=mods)
 
-        beatmap, beatmap_set = await UserScore.get_beatmap_and_beatmap_set(beatmap_id)
-        score = UserScore(context.author.id, ScoreMods(mods=mods), pp, accuracy, combo, None, None, None, beatmap,
-                          beatmap_set)
+        beatmap, beatmap_set = await ScoreBeatmap.get_beatmap_and_beatmap_set(beatmap_id)
+        score = UserScore(context.author.id, mods, pp, accuracy, combo, None, None, None, beatmap, beatmap_set)
 
         expected_player = rs_message.content[32:-3]
         discord_id = Database().get_discord_id(expected_player)
 
         if not discord_id:
-            return await context.message.add_reaction("🏃‍♂️")
+            return
 
         return await context.send(
             embed=score.get_embed(context.author, f"Add score to {context.author.name}?"),
@@ -321,7 +332,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         description="Adds a score",
     )
     async def add_score(self, context: Context, beatmap_id=3920486, pp=0.0, accuracy=100.0, combo=1,
-                        mods="", ar=None, cs=None, speed=None):
+                        mods=None, ar=None, cs=None, speed=None):
 
         mods = ScoreMods(mods=mods)
 
@@ -339,7 +350,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         if not 0 <= combo <= beatmap.max_combo:
             return await context.send("Provided combo is greater than max combo.")
 
-        beatmap, beatmap_set = await UserScore.get_beatmap_and_beatmap_set(beatmap_id)
+        beatmap, beatmap_set = await ScoreBeatmap.get_beatmap_and_beatmap_set(beatmap_id)
         score = UserScore(context.author.id, mods, pp, accuracy, combo, ar, cs, speed, beatmap, beatmap_set)
         score.add_to_db()
 

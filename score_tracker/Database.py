@@ -64,7 +64,7 @@ class Database:
 
     def get_score(self, discord_id: int, beatmap_id: int, mods: ScoreMods):
         self.cursor.execute('''
-            SELECT mods, pp, accuracy, combo, ar, cs
+            SELECT mods, pp, accuracy, combo, ar, cs, speed
             FROM Scores
             WHERE discord_id=? AND beatmap_id=? AND mods=?;
         ''', (discord_id, beatmap_id, int(mods)))
@@ -119,14 +119,21 @@ class Database:
 
         self.connection.commit()
 
-    def add_score(self, score, discord_id):
-        print("Added score")
-        self.cursor.execute('''
-            INSERT OR REPLACE INTO Scores(discord_id, beatmap_id, mods, pp, accuracy, combo, ar, cs, speed)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-        ''', (discord_id, score.beatmap.beatmap_id, int(score.mods), score.pp, score.accuracy, score.combo, score.ar, score.cs, score.speed))
+    def add_score(self, score, discord_id, keep_highest=False):
+        existing_score = self.get_score(discord_id, score.beatmap.beatmap_id, score.mods)
 
-        self.connection.commit()
+        if not keep_highest or not existing_score or score.pp > existing_score[1]:
+            print(f"Added score: {score.beatmap_set.title}")
+            self.cursor.execute('''
+                INSERT OR REPLACE INTO Scores(discord_id, beatmap_id, mods, pp, accuracy, combo, ar, cs, speed)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+            ''', (discord_id, score.beatmap.beatmap_id, int(score.mods), score.pp, score.accuracy, score.combo, score.ar, score.cs, score.speed))
+
+            self.connection.commit()
+
+            return True
+
+        return False
 
     def get_scores(self, discord_id: int):
         self.cursor.execute('''

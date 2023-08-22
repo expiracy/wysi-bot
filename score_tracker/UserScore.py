@@ -1,11 +1,5 @@
 import discord
-from discord import User
-from ossapi import OssapiAsync
 from score_tracker.Database import Database
-from score_tracker.ScoreMods import ScoreMods
-from score_tracker.ScoreBeatmap import ScoreBeatmap
-from score_tracker.ScoreBeatmapSet import ScoreBeatmapSet
-from WYSIBot import config
 
 
 class UserScore:
@@ -27,7 +21,7 @@ class UserScore:
         link = f"https://osu.ppy.sh/b/{self.beatmap.beatmap_id}"
         score_string = f"[**{self.beatmap_set.title}**]({link}) [{self.beatmap.version}]"
 
-        if self.mods:
+        if str(self.mods):
             score_string += f" + **{str(self.mods)}**"
 
         if self.speed:
@@ -36,7 +30,7 @@ class UserScore:
         score_string += f'''
         **Artist:** {self.beatmap_set.artist}
         **Mapper:** {self.beatmap_set.mapper}
-        **PP:** {self.pp} PP | **Accuracy:** {self.accuracy}% | **Combo:** {self.combo}/{self.beatmap.max_combo}x'''
+        **PP:** {self.pp} PP | **Accuracy:** {self.accuracy}% | **Combo:** x{self.combo}/{self.beatmap.max_combo}'''
 
         return score_string
 
@@ -49,29 +43,12 @@ class UserScore:
 
         return embed
 
-    def add_to_db(self):
+    def add_to_db(self, keep_highest=False):
         db = Database()
-        db.add_score(self, self.discord_id)
+        db.add_score(self, self.discord_id, keep_highest)
         db.add_beatmap(self.beatmap, self.beatmap_set.beatmap_set_id)
         db.add_beatmap_set(self.beatmap_set)
 
-    @staticmethod
-    async def get_beatmap_and_beatmap_set(beatmap_id):
-        osu_api = OssapiAsync(config["client_id"], config["client_secret"])
 
-        beatmap = await osu_api.beatmap(beatmap_id)
-        beatmap_set = beatmap._beatmapset
-
-        user = await osu_api.user(beatmap.user_id)
-
-        if user:
-            mapper = user.username
-        else:
-            mapper = ""
-
-        beatmap = ScoreBeatmap(beatmap_id, beatmap.version, beatmap.difficulty_rating, beatmap.max_combo)
-        beatmap_set = ScoreBeatmapSet(beatmap_set.id, beatmap_set.title, beatmap_set.artist, beatmap_set.covers.list, mapper)
-
-        return beatmap, beatmap_set
 
 
