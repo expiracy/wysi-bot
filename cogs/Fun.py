@@ -12,7 +12,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 
-class WYSICommands(commands.Cog, name="WYSICommands"):
+class Fun(commands.Cog, name="Fun"):
     def __init__(self, bot):
         self.bot = bot
 
@@ -57,94 +57,6 @@ class WYSICommands(commands.Cog, name="WYSICommands"):
         return await context.send(
             f"{context.author.mention} rolled {random.randint(0, upper_bound)} with an upper bound of {upper_bound}!")
 
-    @commands.hybrid_command(
-        name="send",
-        description="Secret",
-    )
-    async def message(self, context: Context, channel, message):
-        await context.guild.get_channel(channel).send(message)
-
-    @commands.hybrid_command(
-        name="rank_pp",
-        description="Converts: pp -> rank or rank -> pp"
-    )
-    async def rank_pp(self, context: Context):
-        pass
-
-    @commands.hybrid_command(
-        name="bonus_pp",
-        description="Converts: beatmap amount -> bonus PP or bonus PP -> beatmap amount",
-    )
-    async def bonus_pp(self, context: Context, num_beatmaps=None, bonus_pp=None):
-
-        if num_beatmaps:
-            x = int(num_beatmaps)
-            res = 416.6667 * (1 - 0.9994 ** x)
-            return await context.send(f"{num_beatmaps} beatmaps = {round(res, 4)} bonus pp")
-
-        if bonus_pp:
-            x = float(bonus_pp)
-            try:
-                res = (-math.log((4166667 - 10000 * x) / 4166667) /
-                       (3 * math.log(2) + 4 * math.log(5) - math.log(19) - math.log(263)))
-                return await context.send(f"{bonus_pp} bonus pp = {round(res)} beatmaps")
-            except ValueError:
-                return await context.send("Error: max bonus pp is 416.6667 (non inclusive)")
-
-        return await context.send("No args provided.")
-
-    @commands.hybrid_command(
-        name="transfer",
-        description="Transfer channel contents",
-    )
-    async def transfer(self, context: Context, destination_channel_id=1141487752169406665):
-
-        destination_channel = self.bot.get_channel(destination_channel_id)
-
-        with open("done.txt", "r+") as file:
-
-            message_ids = file.readlines()
-            seen = set(message_ids)
-
-            if message_ids:
-                newest_message_id = max(message_ids)
-                newest_message = await context.channel.fetch_message(int(newest_message_id))
-                history = context.channel.history(limit=50000, oldest_first=True, after=newest_message.created_at)
-                counter = len(message_ids) - 1
-            else:
-                history = context.channel.history(limit=50000, oldest_first=True)
-                counter = 1
-
-            async for message in history:
-                try:
-                    print(counter)
-                    counter += 1
-
-                    if message.id not in seen:
-                        file.write(f"{message.id}\n")
-                    else:
-                        continue
-
-                    embed = discord.Embed()
-                    embed.set_author(name=message.author.name, icon_url=message.author.avatar.url)
-
-                    if message.attachments:
-                        await destination_channel.send(embed=embed)
-
-                        for attachment in message.attachments:
-                            await destination_channel.send(attachment.url)
-
-                    elif "gif" in message.content:
-                        await destination_channel.send(embed=embed)
-                        await destination_channel.send(message.content)
-
-                    else:
-                        embed.add_field(name="", value=message.content, inline=True)
-                        await destination_channel.send(embed=embed)
-
-                except Exception as e:
-                    print(e)
-
 
 async def setup(bot):
-    await bot.add_cog(WYSICommands(bot))
+    await bot.add_cog(Fun(bot))

@@ -43,6 +43,8 @@ async def on_ready():
         await bot.tree.sync()
         print(f'Synced commands')
 
+
+
     print(f'Logged in as {bot.user}')
 
 
