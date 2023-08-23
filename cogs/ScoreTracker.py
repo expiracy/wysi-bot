@@ -241,10 +241,15 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
 
                 accuracy = row['acc']
                 pp = row['raw pp']
+                mods = ScoreMods(mods)
+
+                if Database().get_score(context.author.id, int(beatmap_id), mods):
+                    continue
 
                 beatmap, beatmap_set = await ScoreBeatmap.get_beatmap_and_beatmap_set(beatmap_id)
-                score = UserScore(context.author.id, ScoreMods(mods), pp, accuracy, row['combo'].split('/')[0], ar,
+                score = UserScore(context.author.id, mods, pp, accuracy, row['combo'].split('/')[0], ar,
                                   cs, speed, beatmap, beatmap_set)
+
                 score.add_to_db()
 
     @commands.hybrid_command(

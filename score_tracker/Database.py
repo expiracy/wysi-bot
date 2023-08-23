@@ -185,7 +185,7 @@ class Database:
                     Beatmaps.beatmap_set_id, title, artist, image, mapper 
             FROM Scores, Beatmaps, BeatmapSets
             WHERE discord_id=? AND Scores.beatmap_id=Beatmaps.beatmap_id AND Beatmaps.beatmap_set_id=BeatmapSets.beatmap_set_id
-            ORDER BY PP DESC;
+            ORDER BY PP DESC, accuracy DESC;
         ''', (discord_id,))
 
         return self.cursor.fetchall()
