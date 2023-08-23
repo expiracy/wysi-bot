@@ -282,7 +282,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
     )
     async def track(self, context: Context, osu_id):
         try:
-            user = await osu_api.user(osu_id)
+            user = await osu_api.user(osu_id, mode="osu")
         except ValueError:
             return await context.send(f"Invalid osu ID provided: `{osu_id}`.")
 
