@@ -7,21 +7,15 @@ from score_tracker.UserScores import UserScores
 
 
 class TrackedUsers:
-    def __init__(self, discord_id):
+    def __init__(self, discord_id, tracked_users):
         self.profile = UserProfile(UserScores(discord_id))
-        self.tracked_ids = Database().get_tracked(discord_id)
+        self.tracked_users = tracked_users
 
     async def get_embed(self, user):
         embed = discord.Embed(colour=user.colour)
         embed.set_author(name=f"{user.name}'s Tracked Users", icon_url=user.avatar.url)
 
-        for osu_id in self.tracked_ids:
-            osu_id = osu_id[0]
-            try:
-                user = await osu_api.user(osu_id, mode="osu")
-            except Exception:
-                continue
-
+        for user in self.tracked_users:
             user_pp = user.statistics.pp
             user_acc = user.statistics.hit_accuracy
 
@@ -29,7 +23,7 @@ class TrackedUsers:
                 user_pp = 72727
                 user_acc = 100.00
 
-            tracked_user_string = (f"[**{user.username}**](https://osu.ppy.sh/u/{osu_id})\n"
+            tracked_user_string = (f"[**{user.username}**](https://osu.ppy.sh/u/{user.id})\n"
                                    f"**PP:** {user_pp} (You are {round(self.profile.weighted_pp - user_pp, 2):+} PP)\n"
                                    f"**Accuracy:** {round(user_acc, 2)} % (You are {round(self.profile.accuracy - user_acc, 2):+} %)")
 

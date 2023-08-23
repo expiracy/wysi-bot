@@ -30,8 +30,21 @@ class TrackedUsersButton(discord.ui.View):
         if interaction.user.id != self.author.id:
             return
 
+        tracked_users = []
+        tracked_ids = Database().get_tracked(self.author.id)
+
+        for osu_id in tracked_ids:
+            osu_id = osu_id[0]
+
+            try:
+                user = await osu_api.user(osu_id, mode="osu")
+            except Exception:
+                continue
+
+            tracked_users.append(user)
+
         return await interaction.response.edit_message(
-            embed=await TrackedUsers(self.author.id).get_embed(self.author),
+            embed=TrackedUsers(self.author.id, tracked_users).get_embed(self.author),
             view=ProfileButton(self.author)
         )
 
