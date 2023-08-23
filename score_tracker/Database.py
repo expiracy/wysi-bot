@@ -114,6 +114,18 @@ class Database:
 
         return self.cursor.fetchone()
 
+    def search_scores(self, discord_id, substring):
+        self.cursor.execute('''
+            SELECT Scores.beatmap_id, mods, pp, accuracy, combo, ar, cs, speed,
+                    version, difficulty, max_combo, 
+                    Beatmaps.beatmap_set_id, title, artist, image, mapper 
+            FROM Scores, Beatmaps, BeatmapSets
+            WHERE discord_id=? AND title LIKE '%' || ? || '%'  AND Scores.beatmap_id=Beatmaps.beatmap_id AND Beatmaps.beatmap_set_id=BeatmapSets.beatmap_set_id
+            ORDER BY PP DESC, accuracy DESC;
+        ''', (discord_id, substring))
+
+        return self.cursor.fetchall()
+
     def add_beatmap(self, beatmap: ScoreBeatmap, beatmap_set_id: int):
         if self.get_beatmap(beatmap.beatmap_id):
             return

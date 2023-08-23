@@ -8,9 +8,11 @@ from score_tracker.UserScore import UserScore
 
 
 class UserScores:
-    def __init__(self, discord_id):
+    def __init__(self, discord_id, scores=None):
         self.discord_id = discord_id
-        scores = Database().get_scores(discord_id)
+
+        if not scores:
+            scores = Database().get_scores(discord_id)
 
         self.scores = [UserScore(discord_id, ScoreMods(mods), pp, accuracy, combo, ar, cs, speed,
                                  ScoreBeatmap(beatmap_id, version, difficulty, max_combo),
