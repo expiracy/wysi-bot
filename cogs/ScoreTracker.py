@@ -197,6 +197,9 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         description="never fc"
     )
     async def never_fc(self, context: Context):
+        if context.author.id not in {403305665113751572, 187907815711571977}:
+            return await context.send("You cannot become cyreu")
+
         with open("cyreu.csv", 'r') as file:
 
             reader = csv.DictReader(file)
