@@ -11,7 +11,7 @@ class TrackedUsers:
         self.profile = UserProfile(UserScores(discord_id))
         self.tracked_users = tracked_users
 
-    async def get_embed(self, user):
+    def get_embed(self, user):
         embed = discord.Embed(colour=user.colour)
         embed.set_author(name=f"{user.name}'s Tracked Users", icon_url=user.avatar.url)
 
