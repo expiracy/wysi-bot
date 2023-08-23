@@ -8,8 +8,6 @@ from ossapi import OssapiAsync
 
 # https://discord.com/api/oauth2/authorize?client_id=1013216514532454450&permissions=49469432790903&scope=applications.commands%20bot
 
-print("TEST")
-
 try:
     with open(f"{os.path.dirname(__file__)}\\config.json", 'r') as json_file:
         config = json.load(json_file)

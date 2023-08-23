@@ -64,6 +64,8 @@ class UserProfile:
 
             factor *= 0.95
 
-        self.accuracy /= (20 * (1 - math.pow(0.95, len(scores))))
+        if len(scores) > 0:
+            self.accuracy /= (20 * (1 - math.pow(0.95, len(scores))))
+
         self.accuracy = round(self.accuracy, 2)
         self.weighted_pp = round(self.weighted_pp, 1)
