@@ -190,7 +190,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         name="search_score",
         description="Search for substring in scores.",
     )
-    async def always_fc(self, context: Context, search_term):
+    async def search_scores(self, context: Context, search_term):
         scores = Database().search_scores(context.author.id, search_term)
         scores = UserScores(context.author.id, scores)
         return await context.send(embed=scores.get_embed(context.author, f"{context.author.name}'s Scores Matching {search_term}"))
