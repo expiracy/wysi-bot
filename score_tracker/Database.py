@@ -89,6 +89,14 @@ class Database:
 
         return self.cursor.fetchone()
 
+    def remove_score(self, discord_id, beatmap_id, mods):
+        self.cursor.execute('''
+            DELETE FROM Scores
+            WHERE discord_id=? AND beatmap_id=? AND mods=?;
+        ''', (discord_id, beatmap_id, int(mods)))
+
+        self.connection.commit()
+
     def remove_scores(self, discord_id: int):
         self.cursor.execute('''
             DELETE FROM Scores

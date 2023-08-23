@@ -27,12 +27,10 @@ class UserProfile:
         embed.set_thumbnail(url=user.avatar.url)
         embed.set_author(name=f"{user.name}'s Profile", icon_url=user.avatar.url)
 
-        embed.add_field(name="", value=str(self), inline=False)
+        embed.add_field(name="Statistics", value=str(self), inline=False)
 
-        info = (f"**# Scores:** {len(self.scores)}\n"
-                f"**# FCs: **{self.fcs} ({round(100 * self.fcs / len(self.scores), 2)} %)")
-
-        embed.add_field(name="", value=info, inline=False)
+        info = (f"**Scores:** {len(self.scores)}\n"
+                f"**FCs: **{self.fcs} ({round(100 * self.fcs / len(self.scores), 2)} %)")
 
         mods_info = ""
 
@@ -40,13 +38,15 @@ class UserProfile:
             mods = ScoreMods(encoded_mods)
 
             if str(mods):
-                mods_info += f"**# {str(mods)}:** {count}\n"
+                mods_info += f"**{str(mods)}:** "
             else:
-                mods_info += f"**# No Mod:** {count}\n"
+                mods_info += f"**No Mod:** "
+
+            mods_info += f"{count} ({round(100 * count / len(self.scores), 2)} %)\n"
 
         mods_info = mods_info[:-1]
 
-        embed.add_field(name="", value=mods_info, inline=False)
+        embed.add_field(name="Frequencies", value=f"{info}\n{mods_info}", inline=False)
 
         return embed
 

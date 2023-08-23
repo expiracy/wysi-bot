@@ -257,6 +257,23 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         )
 
     @commands.hybrid_command(
+        name="remove_score",
+        description="Removes a score"
+    )
+    async def remove_score(self, context: Context, beatmap_id: int, mods=None):
+        mods = ScoreMods(mods)
+
+        db = Database()
+        score = db.get_score(context.author.id, beatmap_id, mods)
+
+        if not score:
+            return await context.send(f"No score found for beatmap ID `{beatmap_id}` and mods `{str(mods)}`.")
+
+        db.remove_score(context.author.id, beatmap_id, mods)
+
+        return await context.send(f"Score with beatmap ID `{beatmap_id}` and mods `{str(mods)}` was removed successfully!")
+
+    @commands.hybrid_command(
         name="track",
         description="Tracks a profile's PP"
     )
@@ -264,11 +281,11 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         try:
             user = await osu_api.user(osu_id)
         except ValueError:
-            return await context.send("Invalid osu ID provided.")
+            return await context.send(f"Invalid osu ID provided: `{osu_id}`.")
 
         Database().add_tracked(context.author.id, osu_id)
 
-        return await context.send(f"Tracking user: `{user.username}`! (to untrack, use **/untrack**)")
+        return await context.send(f"Tracking user: `{user.username}`! (to untrack, use `/untrack`)")
 
     @commands.hybrid_command(
         name="tracked",
