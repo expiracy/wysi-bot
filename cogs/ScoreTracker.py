@@ -367,7 +367,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         name="add_score",
         description="Adds a score",
     )
-    async def add_score(self, context: Context, beatmap_id=3920486, pp=0.0, accuracy=100.0, combo=1,
+    async def add_score(self, context: Context, beatmap_id: int, pp: float, accuracy: float, combo: int,
                         mods=None, ar=None, cs=None, speed=None):
 
         mods = ScoreMods(mods)
