@@ -322,7 +322,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         description="Register your account to be tracked",
     )
     async def register(self, context: Context, osu_id):
-        user = await osu_api.user(osu_id)
+        user = await osu_api.user(osu_id, mode="osu")
 
         if not user:
             return await context.send("Invalid osu user id provided.")
@@ -417,3 +417,4 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
 
 async def setup(bot):
     await bot.add_cog(ScoreTracker(bot))
+

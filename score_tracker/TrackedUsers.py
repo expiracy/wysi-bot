@@ -18,7 +18,7 @@ class TrackedUsers:
         for osu_id in self.tracked_ids:
             osu_id = osu_id[0]
             try:
-                user = await osu_api.user(osu_id)
+                user = await osu_api.user(osu_id, mode="osu")
             except Exception:
                 continue
 
