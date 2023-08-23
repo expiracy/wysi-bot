@@ -7,9 +7,25 @@ from score_tracker.UserScores import UserScores
 
 
 class TrackedUsers:
-    def __init__(self, discord_id, tracked_users):
+    def __init__(self, discord_id):
+        self.discord_id = discord_id
         self.profile = UserProfile(UserScores(discord_id))
-        self.tracked_users = tracked_users
+        self.tracked_users = []
+
+    async def get_tracked_users(self):
+        tracked_ids = Database().get_tracked(self.discord_id)
+
+        for osu_id in tracked_ids:
+            osu_id = osu_id[0]
+
+            try:
+                user = await osu_api.user(osu_id, mode="osu")
+            except Exception:
+                continue
+
+            self.tracked_users.append(user)
+
+        return self
 
     def get_embed(self, user):
         embed = discord.Embed(colour=user.colour)
