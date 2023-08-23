@@ -6,21 +6,23 @@ class ScoreMods:
     for i in range(0, len(mod_order)):
         mod_values[mod_order[i]] = 1 << i
 
-    def __init__(self, mods=None, code=None):
-        if code:
-            self.code = code
-            self.mods = self.decode(code)
+    def __init__(self, mods):
+        if type(mods) == int:
+            self.code = mods
+            self.string = self.decode(mods)
 
-        elif mods:
+        elif type(mods) == str:
             if mods == "No Mod":
                 mods = ""
 
-            self.mods = mods
+            self.string = mods
             self.code = self.encode(mods)
-
         else:
-            self.mods = ""
+            self.string = ""
             self.code = 0
+
+    def __hash__(self):
+        return int(self)
 
     @staticmethod
     def encode(mods):
@@ -74,13 +76,10 @@ class ScoreMods:
         return res
 
     def __str__(self):
-        return self.mods
+        return self.string
 
     def __int__(self):
         return self.code
-
-
-
 
 
 if __name__ == '__main__':

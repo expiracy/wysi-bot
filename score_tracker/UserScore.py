@@ -1,4 +1,6 @@
 import discord
+from discord import User
+
 from score_tracker.Database import Database
 
 
@@ -27,15 +29,14 @@ class UserScore:
         if self.speed:
             score_string += f" **({self.speed}x)**"
 
-        score_string += f'''
-        **Artist:** {self.beatmap_set.artist}
-        **Mapper:** {self.beatmap_set.mapper}
-        **PP:** {self.pp} PP | **Accuracy:** {self.accuracy}% | **Combo:** x{self.combo}/{self.beatmap.max_combo}'''
+        score_string += (f"\n**Artist:** {self.beatmap_set.artist}\n"
+                         f"**Mapper:** {self.beatmap_set.mapper}\n"
+                         f"**PP:** {self.pp} PP | **Accuracy:** {self.accuracy}% | **Combo:** x{self.combo}/{self.beatmap.max_combo}")
 
         return score_string
 
-    def get_embed(self, user, title):
-        embed = discord.Embed()
+    def get_embed(self, user: User, title):
+        embed = discord.Embed(colour=user.colour)
 
         embed.set_author(name=title, icon_url=user.avatar.url)
         embed.set_thumbnail(url=self.beatmap_set.image)
@@ -48,7 +49,3 @@ class UserScore:
         db.add_score(self, self.discord_id, keep_highest)
         db.add_beatmap(self.beatmap, self.beatmap_set.beatmap_set_id)
         db.add_beatmap_set(self.beatmap_set)
-
-
-
-

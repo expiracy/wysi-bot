@@ -1,10 +1,10 @@
-import asyncio
 import json
 import os
 import sys
 
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
+from ossapi import OssapiAsync
 
 # https://discord.com/api/oauth2/authorize?client_id=1013216514532454450&permissions=49469432790903&scope=applications.commands%20bot
 
@@ -24,6 +24,8 @@ bot = commands.Bot(
     command_prefix=config['prefix'],
     intents=intents,
 )
+
+osu_api = OssapiAsync(config["client_id"], config["client_secret"])
 
 
 @bot.event

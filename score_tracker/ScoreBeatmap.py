@@ -1,6 +1,4 @@
-from ossapi import OssapiAsync
-
-from WYSIBot import config
+from WYSIBot import osu_api
 from score_tracker.ScoreBeatmapSet import ScoreBeatmapSet
 
 
@@ -13,8 +11,6 @@ class ScoreBeatmap:
 
     @staticmethod
     async def get_beatmap_and_beatmap_set(beatmap_id):
-        osu_api = OssapiAsync(config["client_id"], config["client_secret"])
-
         beatmap = await osu_api.beatmap(beatmap_id)
         beatmap_set = beatmap._beatmapset
 
@@ -24,6 +20,7 @@ class ScoreBeatmap:
             mapper = ""
 
         beatmap = ScoreBeatmap(beatmap_id, beatmap.version, beatmap.difficulty_rating, beatmap.max_combo)
-        beatmap_set = ScoreBeatmapSet(beatmap_set.id, beatmap_set.title, beatmap_set.artist, beatmap_set.covers.list, mapper)
+        beatmap_set = ScoreBeatmapSet(beatmap_set.id, beatmap_set.title, beatmap_set.artist, beatmap_set.covers.list,
+                                      mapper)
 
         return beatmap, beatmap_set

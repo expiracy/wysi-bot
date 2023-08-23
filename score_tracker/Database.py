@@ -1,10 +1,8 @@
 import sqlite3
-from ossapi import Beatmap
 
 from score_tracker import ScoreMods
 from score_tracker.ScoreBeatmap import ScoreBeatmap
 from score_tracker.ScoreBeatmapSet import ScoreBeatmapSet
-
 
 
 class Database:
@@ -18,6 +16,7 @@ class Database:
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS Users (
                 discord_id INTEGER PRIMARY KEY,
+                osu_id INTEGER,
                 osu_username VARCHAR(32)
             );
         ''')
@@ -29,6 +28,16 @@ class Database:
                 artist VARCHAR(128),
                 image VARCHAR(255),
                 mapper VARCHAR (32)
+            );
+        ''')
+
+        self.cursor.execute('''
+            CREATE TABLE IF NOT Exists Tracking (
+                discord_id INTEGER, 
+                osu_id INTEGER,
+                PRIMARY KEY (discord_id, osu_id),
+                FOREIGN KEY (discord_id) REFERENCES User(discord_id),
+                FOREIGN KEY (osu_id) REFERENCES User(osu_id)
             );
         ''')
 
@@ -119,6 +128,30 @@ class Database:
 
         self.connection.commit()
 
+    def add_tracked(self, discord_id, osu_id):
+        self.cursor.execute('''
+            INSERT OR REPLACE INTO Tracking
+            VALUES (?, ?);
+        ''', (discord_id, osu_id))
+
+        self.connection.commit()
+
+    def remove_tracked(self, discord_id, osu_id):
+        self.cursor.execute('''
+            DELETE FROM Tracking
+            WHERE discord_id=? AND osu_ID=?;
+        ''', (discord_id, osu_id))
+
+        self.connection.commit()
+
+    def get_tracked(self, discord_id):
+        self.cursor.execute('''
+            SELECT osu_id FROM Tracking
+            WHERE discord_id=?;
+        ''', (discord_id,))
+
+        return self.cursor.fetchall()
+
     def add_score(self, score, discord_id, keep_highest=False):
         existing_score = self.get_score(discord_id, score.beatmap.beatmap_id, score.mods)
 
@@ -127,7 +160,9 @@ class Database:
             self.cursor.execute('''
                 INSERT OR REPLACE INTO Scores(discord_id, beatmap_id, mods, pp, accuracy, combo, ar, cs, speed)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-            ''', (discord_id, score.beatmap.beatmap_id, int(score.mods), score.pp, score.accuracy, score.combo, score.ar, score.cs, score.speed))
+            ''', (
+            discord_id, score.beatmap.beatmap_id, int(score.mods), score.pp, score.accuracy, score.combo, score.ar,
+            score.cs, score.speed))
 
             self.connection.commit()
 
@@ -163,22 +198,10 @@ class Database:
 
         return self.cursor.fetchone()
 
-    def add_user(self, discord_id, osu_username):
+    def add_user(self, discord_id, osu_id, osu_username):
         self.cursor.execute('''
             INSERT OR REPLACE INTO Users
-            VALUES (?, ?);
-        ''', (discord_id, osu_username))
+            VALUES (?, ?, ?);
+        ''', (discord_id, osu_id, osu_username))
 
         self.connection.commit()
-
-
-
-
-
-
-
-
-
-
-
-

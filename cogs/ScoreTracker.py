@@ -1,31 +1,61 @@
 import asyncio
 import csv
-import json
-import math
-import random
 import re
-import threading
-import time
-from urllib import request
-from discord import InteractionResponse, User
 
 import discord
-import requests
+from discord import User
 from discord.ext import commands
 from discord.ext.commands import Context
-from ossapi import OssapiAsync
 
-from WYSIBot import config
+from WYSIBot import osu_api
 from score_tracker.Database import Database
 from score_tracker.ScoreBeatmap import ScoreBeatmap
-from score_tracker.ScoreBeatmapSet import ScoreBeatmapSet
 from score_tracker.ScoreMods import ScoreMods
+from score_tracker.TrackedUsers import TrackedUsers
 from score_tracker.UserProfile import UserProfile
-
 from score_tracker.UserScore import UserScore
 from score_tracker.UserScores import UserScores
 
-osu_api = OssapiAsync(config["client_id"], config["client_secret"])
+
+class TrackedUsersButton(discord.ui.View):
+    def __init__(self, author: User):
+        super().__init__()
+        self.author = author
+
+    @discord.ui.button(
+        label="Tracked Users",
+        style=discord.ButtonStyle.blurple,
+    )
+    async def tracked(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.author.id:
+            return
+
+        return await interaction.response.edit_message(
+            embed=await TrackedUsers(self.author.id).get_embed(self.author),
+            view=ProfileButton(self.author)
+        )
+
+
+class ProfileButton(discord.ui.View):
+    def __init__(self, author: User):
+        super().__init__()
+        self.author = author
+
+    @discord.ui.button(
+        label="Profile",
+        style=discord.ButtonStyle.blurple,
+    )
+    async def tracked(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.author.id:
+            return
+
+        scores = UserScores(self.author.id)
+        profile = UserProfile(scores=scores)
+
+        return await interaction.response.edit_message(
+            embed=profile.get_embed(self.author),
+            view=TrackedUsersButton(self.author)
+        )
 
 
 class NavigationButtons(discord.ui.View):
@@ -45,7 +75,7 @@ class NavigationButtons(discord.ui.View):
         self.score_number = 1
 
         await interaction.response.edit_message(
-            embed=UserScores(self.author.id).get_embed(f"{self.author.name}'s Scores", self.author.avatar.url, self.score_number),
+            embed=UserScores(self.author.id).get_embed(self.author, f"{self.author.name}'s Scores", self.score_number),
             view=NavigationButtons(self.author, self.score_number)
         )
 
@@ -66,7 +96,7 @@ class NavigationButtons(discord.ui.View):
             self.score_number = 1
 
         await interaction.response.edit_message(
-            embed=scores.get_embed(f"{self.author.name}'s Scores", self.author.avatar.url, self.score_number),
+            embed=scores.get_embed(self.author, f"{self.author.name}'s Scores", self.score_number),
             view=NavigationButtons(self.author, self.score_number)
         )
 
@@ -85,7 +115,7 @@ class NavigationButtons(discord.ui.View):
             self.score_number = 1
 
         await interaction.response.edit_message(
-            embed=scores.get_embed(f"{self.author.name}'s Scores", self.author.avatar.url, self.score_number),
+            embed=scores.get_embed(self.author, f"{self.author.name}'s Scores", self.score_number),
             view=NavigationButtons(self.author, self.score_number)
         )
 
@@ -101,7 +131,7 @@ class NavigationButtons(discord.ui.View):
         self.score_number = max(1, len(scores.scores) - 4)
 
         await interaction.response.edit_message(
-            embed=scores.get_embed(f"{self.author.name}'s Scores", self.author.avatar.url, self.score_number),
+            embed=scores.get_embed(self.author, f"{self.author.name}'s Scores", self.score_number),
             view=NavigationButtons(self.author, self.score_number)
         )
 
@@ -126,12 +156,12 @@ class ConfirmButtons(discord.ui.View):
         embed = interaction.message.embeds[0]
 
         if self.score.add_to_db(keep_highest=True):
-            embed.set_author(name="Score added!", icon_url=embed.author.icon_url)
+            embed.set_author(name=f"Score added to {self.author.name}", icon_url=embed.author.icon_url)
         else:
-            embed.set_author(name="Score not added", icon_url=embed.author.icon_url)
+            embed.set_author(name=f"Score not added to {self.author.name}", icon_url=embed.author.icon_url)
 
-            error_message = f'''Higher PP score exists for this beatmap and mod combo
-            If you need to overwrite the score, use **/add_score**'''
+            error_message = (f"**Beatmap ID and mod combo** has higher or same PP score\n"
+                             f"If you need to overwrite the score, use **/add_score**")
 
             embed.set_field_at(0, name="", value=error_message)
 
@@ -210,7 +240,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
                 pp = row['raw pp']
 
                 beatmap, beatmap_set = await ScoreBeatmap.get_beatmap_and_beatmap_set(beatmap_id)
-                score = UserScore(context.author.id, ScoreMods(mods=mods), pp, accuracy, row['combo'].split('/')[0], ar,
+                score = UserScore(context.author.id, ScoreMods(mods), pp, accuracy, row['combo'].split('/')[0], ar,
                                   cs, speed, beatmap, beatmap_set)
                 score.add_to_db()
 
@@ -222,62 +252,68 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         scores = UserScores(context.author.id)
 
         return await context.send(
-            embed=scores.get_embed(f"{context.author}'s Scores", context.author.avatar.url, score_number),
+            embed=scores.get_embed(context.author, f"{context.author.name}'s Scores", score_number),
             view=NavigationButtons(context.author, score_number)
         )
+
+    @commands.hybrid_command(
+        name="track",
+        description="Tracks a profile's PP"
+    )
+    async def track(self, context: Context, osu_id):
+        try:
+            user = await osu_api.user(osu_id)
+        except ValueError:
+            return await context.send("Invalid osu ID provided.")
+
+        Database().add_tracked(context.author.id, osu_id)
+
+        return await context.send(f"Tracking user: `{user.username}`! (to untrack, use **/untrack**)")
+
+    @commands.hybrid_command(
+        name="tracked",
+        description="Gets tracked users"
+    )
+    async def tracked(self, context):
+        return await context.send(embed=await TrackedUsers(context.author.id).get_embed(context.author))
+
+    @commands.hybrid_command(
+        name="untrack",
+        description="Untrack osu! ID",
+    )
+    async def untrack(self, context: Context, osu_id):
+        Database().remove_tracked(context.author.id, osu_id)
+        return await context.send(f"Untracked user with osu! ID: `{osu_id}`!")
 
     @commands.hybrid_command(
         name="profile",
         description="Get profile stats"
     )
     async def profile(self, context: Context):
-        scores = Database().get_scores(context.author.id)
-        profile = UserProfile(scores)
+        scores = UserScores(context.author.id)
 
-        embed = discord.Embed()
-        embed.set_author(name=f"{context.author.name}'s Profile", icon_url=context.author.avatar.url)
+        profile = UserProfile(scores=scores)
+        embed = profile.get_embed(context.author)
 
-        info = f'''**Scores:** {len(scores)}
-        **PP (Weighted):** {profile.weighted_pp} PP
-        **PP (Raw):** {profile.raw_pp} PP
-        **Accuracy: ** {profile.accuracy} %
-        **FCs: **{profile.fcs}'''
-
-        embed.add_field(name="", value=info)
-
-        # TODO allow user to change this
-        expiracy = (await osu_api.user(14415546))
-        karan = (await osu_api.user(19813440))
-        kyarin = (await osu_api.user(15752228))
-        incognito_mercy = (await osu_api.user(12838922))
-
-        profile_snipes = f"**PP Differences**\n"
-        profile_snipes += f"[{expiracy.username}](https://osu.ppy.sh/users/{expiracy.id}): ∞\n"
-        profile_snipes += f"[{karan.username}](https://osu.ppy.sh/users/{karan.id}): {round(karan.statistics.pp - profile.weighted_pp, 1)}\n"
-        profile_snipes += f"[{kyarin.username}](https://osu.ppy.sh/users/{kyarin.id}): {round(kyarin.statistics.pp - profile.weighted_pp, 1)}\n"
-        profile_snipes += f"[{incognito_mercy.username}](https://osu.ppy.sh/users/{incognito_mercy.id}): {round(incognito_mercy.statistics.pp - profile.weighted_pp, 1)}"
-
-        embed.add_field(name="", value=profile_snipes, inline=False)
-
-        return await context.send(embed=embed)
+        return await context.send(embed=embed, view=TrackedUsersButton(context.author))
 
     @commands.hybrid_command(
         name="register",
         description="Register your account to be tracked",
     )
-    async def register(self, context: Context, osu_username):
-        user = await osu_api.user(user=osu_username)
+    async def register(self, context: Context, osu_id):
+        user = await osu_api.user(osu_id)
 
         if not user:
             return await context.send("Invalid osu user id provided.")
 
-        Database().add_user(context.author.id, osu_username)
+        Database().add_user(context.author.id, osu_id, user.username)
 
         embed = discord.Embed(title="")
         embed.set_author(name=f"User registered!", icon_url=context.author.avatar.url)
 
-        info = f'''You have linked this discord account to osu username: {osu_username}
-        To change the osu username linked to your discord account, please run this command again.'''
+        info = (f"You have linked this discord account to osu username: **{user.username}**\n"
+                f"To change the osu username linked to your discord account, run this command again.")
 
         embed.add_field(name="", value=info)
         return await context.send(embed=embed)
@@ -311,7 +347,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         else:
             mods = re.findall("] \+[a-zA-Z]+ \[", score_embed.author.name)[0][3:-2]
 
-        mods = ScoreMods(mods=mods)
+        mods = ScoreMods(mods)
 
         beatmap, beatmap_set = await ScoreBeatmap.get_beatmap_and_beatmap_set(beatmap_id)
         score = UserScore(context.author.id, mods, pp, accuracy, combo, None, None, None, beatmap, beatmap_set)
@@ -334,7 +370,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
     async def add_score(self, context: Context, beatmap_id=3920486, pp=0.0, accuracy=100.0, combo=1,
                         mods=None, ar=None, cs=None, speed=None):
 
-        mods = ScoreMods(mods=mods)
+        mods = ScoreMods(mods)
 
         if int(mods) == -1:
             return await context.send("Invalid mod combo.")
@@ -354,7 +390,9 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         score = UserScore(context.author.id, mods, pp, accuracy, combo, ar, cs, speed, beatmap, beatmap_set)
         score.add_to_db()
 
-        return await context.send(embed=score.get_embed(context.author, f"Score added for {context.author.name}"))
+        return await context.send(
+            embed=score.get_embed(context.author, f"Score added to {context.author.name}")
+        )
 
 
 async def setup(bot):

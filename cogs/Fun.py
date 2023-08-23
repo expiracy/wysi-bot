@@ -1,13 +1,5 @@
-import asyncio
-import json
-import math
 import random
-import threading
-import time
-from urllib import request
 
-import discord
-import requests
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -35,7 +27,6 @@ class Fun(commands.Cog, name="Fun"):
         description="<3",
     )
     async def leah_kate(self, context: Context):
-
         options = [
             "10 🌠 your selfish 🤬 ❗ 9 🎇 your jaded 😴 8 💋 The dumbest 🤪 guy I dated!! 🥱 7 🗣️ talk a big game 'til your naked.. 🍤 😳 Only 6 🗿 seconds 💁‍♀️ and I had to fake it 🫢 5 🤢 your toxic! ☢️ 4 🌹 cant 🚫 trust you 😵‍💫 🙅‍♀️ 3 🥉 you still got mommy 👩‍👧 issues ⁉️ 😂 2 🥈 years of your bullshit 💩 😒 i cant undo 1: 🥇 I hate the fact 😖 that you made me love you 💔 ⛓️ 🥀",
             "So drink up 🍻⬆️ , get wasted 🥴️🤢 We only got one shot ☝🔫 , let's waste it 🗑️️ They'll never remember 🙅🧠 what your name is 🔤 No one gives a fuck 🤷🖕 if you're internet famous 🌐🥳️️ So stay up 🚫🛌 , get tattoos 🖋🦵️️ Make out with a stranger 💋🥰️️ in the bathroom 🚻 It's okay to scream it 😆🔊 , if you have to We're totally fucked 😵💀 Life sucks 🌱👎",
