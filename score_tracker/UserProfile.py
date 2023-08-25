@@ -19,22 +19,25 @@ class UserProfile:
         self.calculate_stats(self.scores)
 
     def __str__(self):
-        return (f"**PP:** {self.weighted_pp} PP\n"
-                f"**Accuracy:** {self.accuracy} %\n")
+        return (f"**Profile Statistics**\n"
+                f"**Accuracy:** {self.accuracy} %\n"
+                f"**PP:** {self.weighted_pp} PP")
 
     def get_embed(self, user: User):
         embed = discord.Embed(colour=user.colour)
         embed.set_thumbnail(url=user.avatar.url)
         embed.set_author(name=f"{user.name}'s Profile", icon_url=user.avatar.url)
 
-        embed.add_field(name="Statistics", value=str(self), inline=False)
+        embed.add_field(name="", value=str(self), inline=False)
 
-        info = (f"**Scores:** {len(self.scores)}\n"
+        info = (f"**Score Distribution**\n"
+                f"**Total:** {len(self.scores)}\n"
                 f"**FCs: **{self.fcs} ({round(100 * self.fcs / len(self.scores), 2)} %)")
 
         mods_info = ""
+        sorted_frequencies = sorted(self.mods_counter.items(), key=lambda x: x[1], reverse=True)
 
-        for encoded_mods, count in sorted(self.mods_counter.items(), key=lambda x: x[1], reverse=True):
+        for encoded_mods, count in sorted_frequencies:
             mods = ScoreMods(encoded_mods)
 
             if str(mods):
@@ -46,7 +49,7 @@ class UserProfile:
 
         mods_info = mods_info[:-1]
 
-        embed.add_field(name="Frequencies", value=f"{info}\n{mods_info}", inline=False)
+        embed.add_field(name="", value=f"{info}\n{mods_info}", inline=False)
 
         return embed
 
@@ -69,3 +72,5 @@ class UserProfile:
 
         self.accuracy = round(self.accuracy, 2)
         self.weighted_pp = round(self.weighted_pp, 1)
+
+

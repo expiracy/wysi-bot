@@ -3,183 +3,18 @@ import csv
 import re
 
 import discord
-from discord import User
 from discord.ext import commands
 from discord.ext.commands import Context
 
 from WYSIBot import osu_api
+from score_tracker.Buttons import ProfileButtons, ScoresButtons, TrackedUsersButtons
 from score_tracker.Database import Database
 from score_tracker.ScoreBeatmap import ScoreBeatmap
 from score_tracker.ScoreMods import ScoreMods
 from score_tracker.TrackedUsers import TrackedUsers
 from score_tracker.UserProfile import UserProfile
-from score_tracker.UserScore import UserScore
+from score_tracker.UserScore import UserScore, ConfirmButtons
 from score_tracker.UserScores import UserScores
-
-
-class TrackedUsersButton(discord.ui.View):
-    def __init__(self, author: User):
-        super().__init__()
-        self.author = author
-
-    @discord.ui.button(
-        label="Tracked Users",
-        style=discord.ButtonStyle.blurple,
-    )
-    async def tracked(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.author.id:
-            return
-
-        tracked_users = await TrackedUsers(self.author.id).get_tracked_users()
-
-        return await interaction.response.edit_message(
-            embed=tracked_users.get_embed(self.author),
-            view=ProfileButton(self.author)
-        )
-
-
-class ProfileButton(discord.ui.View):
-    def __init__(self, author: User):
-        super().__init__()
-        self.author = author
-
-    @discord.ui.button(
-        label="Profile",
-        style=discord.ButtonStyle.blurple,
-    )
-    async def tracked(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.author.id:
-            return
-
-        scores = UserScores(self.author.id)
-        profile = UserProfile(scores=scores)
-
-        return await interaction.response.edit_message(
-            embed=profile.get_embed(self.author),
-            view=TrackedUsersButton(self.author)
-        )
-
-
-class NavigationButtons(discord.ui.View):
-    def __init__(self, author: User, score_number):
-        super().__init__()
-        self.author = author
-        self.score_number = score_number
-
-    @discord.ui.button(
-        label="<<",
-        style=discord.ButtonStyle.blurple,
-    )
-    async def skip_start(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.author.id:
-            return
-
-        self.score_number = 1
-
-        await interaction.response.edit_message(
-            embed=UserScores(self.author.id).get_embed(self.author, f"{self.author.name}'s Scores", self.score_number),
-            view=NavigationButtons(self.author, self.score_number)
-        )
-
-    @discord.ui.button(
-        label="<",
-        style=discord.ButtonStyle.blurple,
-    )
-    async def last(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.author.id:
-            return
-
-        scores = UserScores(self.author.id)
-        self.score_number -= 5
-
-        if self.score_number == -4:
-            self.score_number = max(1, len(scores.scores) - 4)
-        elif 0 >= self.score_number > -4:
-            self.score_number = 1
-
-        await interaction.response.edit_message(
-            embed=scores.get_embed(self.author, f"{self.author.name}'s Scores", self.score_number),
-            view=NavigationButtons(self.author, self.score_number)
-        )
-
-    @discord.ui.button(
-        label=">",
-        style=discord.ButtonStyle.blurple,
-    )
-    async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.author.id:
-            return
-
-        scores = UserScores(self.author.id)
-        self.score_number += 5
-
-        if self.score_number > len(scores.scores):
-            self.score_number = 1
-
-        await interaction.response.edit_message(
-            embed=scores.get_embed(self.author, f"{self.author.name}'s Scores", self.score_number),
-            view=NavigationButtons(self.author, self.score_number)
-        )
-
-    @discord.ui.button(
-        label=">>",
-        style=discord.ButtonStyle.blurple,
-    )
-    async def skip_end(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.author.id:
-            return
-
-        scores = UserScores(self.author.id)
-        self.score_number = max(1, len(scores.scores) - 4)
-
-        await interaction.response.edit_message(
-            embed=scores.get_embed(self.author, f"{self.author.name}'s Scores", self.score_number),
-            view=NavigationButtons(self.author, self.score_number)
-        )
-
-
-class ConfirmButtons(discord.ui.View):
-    def __init__(self, author: User, score, expected_player):
-        super().__init__()
-        self.author = author
-        self.score = score
-        self.expected_player = expected_player
-
-    @discord.ui.button(
-        label="Add",
-        style=discord.ButtonStyle.green,
-    )
-    async def add(self, interaction: discord.Interaction, button: discord.ui.Button):
-        player = Database().get_osu_username(interaction.user.id)
-
-        if interaction.user.id != self.author.id or not player or self.expected_player != player[0]:
-            return
-
-        embed = interaction.message.embeds[0]
-
-        if self.score.add_to_db(keep_highest=True):
-            embed.set_author(name=f"Score added to {self.author.name}", icon_url=embed.author.icon_url)
-        else:
-            embed.set_author(name=f"Score not added to {self.author.name}", icon_url=embed.author.icon_url)
-
-            error_message = (f"**Beatmap ID and mod combo** has higher or same PP score\n"
-                             f"If you need to overwrite the score, use **/add_score**")
-
-            embed.set_field_at(0, name="", value=error_message)
-
-        await interaction.response.edit_message(embed=embed, view=None)
-
-    @discord.ui.button(
-        label="Ignore",
-        style=discord.ButtonStyle.red,
-    )
-    async def ignore(self, interaction: discord.Interaction, button: discord.ui.Button):
-        player = Database().get_osu_username(interaction.user.id)
-
-        if interaction.user.id != self.author.id or not player or self.expected_player != player[0]:
-            return
-
-        await interaction.response.edit_message(delete_after=True)
 
 
 class ScoreTracker(commands.Cog, name="ScoreTracker"):
@@ -193,7 +28,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
     async def search_scores(self, context: Context, search_term):
         scores = Database().search_scores(context.author.id, search_term)
         scores = UserScores(context.author.id, scores)
-        return await context.send(embed=scores.get_embed(context.author, f"{context.author.name}'s Scores Matching {search_term}"))
+        return await context.send(embed=scores.get_embed(context.author, f"{context.author.name}'s Scores (Search Term: `{search_term}`)"))
 
     @commands.hybrid_command(
         name="always_fc",
@@ -272,7 +107,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
 
         return await context.send(
             embed=scores.get_embed(context.author, f"{context.author.name}'s Scores", score_number),
-            view=NavigationButtons(context.author, score_number)
+            view=ScoresButtons(context.author, score_number)
         )
 
     @commands.hybrid_command(
@@ -311,8 +146,11 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         description="Gets tracked users",
     )
     async def tracked(self, context):
-        tracked_users = await TrackedUsers(context.author.id).get_tracked_users()
-        return await context.send(embed=tracked_users.get_embed(context.author))
+        tracked_users = await TrackedUsers.create(context.author)
+        return await context.send(
+            embed=tracked_users.get_embed(context.author),
+            view=TrackedUsersButtons(context.author, tracked_users)
+        )
 
     @commands.hybrid_command(
         name="untrack",
@@ -332,7 +170,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         profile = UserProfile(scores=scores)
         embed = profile.get_embed(context.author)
 
-        return await context.send(embed=embed, view=TrackedUsersButton(context.author))
+        return await context.send(embed=embed, view=ProfileButtons(context.author))
 
     @commands.hybrid_command(
         name="register",
