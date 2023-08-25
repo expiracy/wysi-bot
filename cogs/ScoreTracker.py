@@ -139,6 +139,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
 
         Database().add_tracked(context.author.id, osu_id)
 
+
         return await context.send(f"Tracking user: `{user.username}`! (to untrack, use `/untrack`)")
 
     @commands.hybrid_command(

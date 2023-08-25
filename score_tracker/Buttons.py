@@ -87,6 +87,7 @@ class ScoresButtons(discord.ui.View):
         super().__init__()
         self.author = author
         self.score_number = score_number
+        self.scores = UserScores(self.author.id)
 
         if not title:
             self.title = f"{self.author.name}'s Scores"
@@ -104,7 +105,7 @@ class ScoresButtons(discord.ui.View):
         self.score_number = 1
 
         await interaction.response.edit_message(
-            embed=UserScores(self.author.id).get_embed(self.author, self.title, self.score_number),
+            embed=self.scores.get_embed(self.author, self.title, self.score_number),
             view=self
         )
 
@@ -116,11 +117,10 @@ class ScoresButtons(discord.ui.View):
         if interaction.user.id != self.author.id:
             return
 
-        scores = UserScores(self.author.id)
         self.score_number = max(self.score_number - 5, 1)
 
         await interaction.response.edit_message(
-            embed=scores.get_embed(self.author, self.title, self.score_number),
+            embed=self.scores.get_embed(self.author, self.title, self.score_number),
             view=self
         )
 
@@ -132,11 +132,10 @@ class ScoresButtons(discord.ui.View):
         if interaction.user.id != self.author.id:
             return
 
-        scores = UserScores(self.author.id)
-        self.score_number = max(1, min(len(scores.scores) - 4, self.score_number + 5))
+        self.score_number = max(1, min(len(self.scores) - 4, self.score_number + 5))
 
         await interaction.response.edit_message(
-            embed=scores.get_embed(self.author, self.title, self.score_number),
+            embed=self.scores.get_embed(self.author, self.title, self.score_number),
             view=self
         )
 
@@ -148,10 +147,9 @@ class ScoresButtons(discord.ui.View):
         if interaction.user.id != self.author.id:
             return
 
-        scores = UserScores(self.author.id)
-        self.score_number = max(1, len(scores.scores) - 4)
+        self.score_number = max(1, len(self.scores) - 4)
 
         await interaction.response.edit_message(
-            embed=scores.get_embed(self.author, self.title, self.score_number),
+            embed=self.scores.get_embed(self.author, self.title, self.score_number),
             view=self
         )

@@ -24,6 +24,9 @@ class UserScores:
 
                        in scores]
 
+    def __len__(self):
+        return len(self.scores)
+
     def get_embed(self, user, title, score_number=1, scores_per_page=5):
         lower_score_index = score_number - 1
         upper_score_index = min(len(self.scores), lower_score_index + scores_per_page)
