@@ -83,11 +83,15 @@ class ProfileButtons(discord.ui.View):
 
 
 class ScoresButtons(discord.ui.View):
-    def __init__(self, author: User, score_number, title=None):
+    def __init__(self, author: User, score_number, title=None, scores=None):
         super().__init__()
         self.author = author
         self.score_number = score_number
-        self.scores = UserScores(self.author.id)
+
+        if not scores:
+            self.scores = UserScores(self.author.id)
+        else:
+            self.scores = scores
 
         if not title:
             self.title = f"{self.author.name}'s Scores"

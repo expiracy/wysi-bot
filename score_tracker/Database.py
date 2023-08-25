@@ -181,8 +181,8 @@ class Database:
                 INSERT OR REPLACE INTO Scores(discord_id, beatmap_id, mods, pp, accuracy, combo, ar, cs, speed)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
             ''', (
-            discord_id, score.beatmap.beatmap_id, int(score.mods), score.pp, score.accuracy, score.combo, score.ar,
-            score.cs, score.speed))
+                discord_id, score.beatmap.beatmap_id, int(score.mods), score.pp, score.accuracy, score.combo, score.ar,
+                score.cs, score.speed))
 
             self.connection.commit()
 

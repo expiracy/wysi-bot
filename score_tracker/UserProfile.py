@@ -72,5 +72,3 @@ class UserProfile:
 
         self.accuracy = round(self.accuracy, 2)
         self.weighted_pp = round(self.weighted_pp, 1)
-
-

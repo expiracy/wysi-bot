@@ -42,5 +42,3 @@ class UserScores:
             embed.add_field(name="", value="", inline=False)
 
         return embed
-
-

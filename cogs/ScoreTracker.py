@@ -22,17 +22,31 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         self.bot = bot
 
     @commands.hybrid_command(
-        name="search_score",
+        name="search_scores",
         description="Search for substring in scores.",
     )
     async def search_scores(self, context: Context, search_term):
         scores = Database().search_scores(context.author.id, search_term)
+
+        if not scores:
+            return await context.send(f"No search results for search term: `{search_term}` :(")
+
         scores = UserScores(context.author.id, scores)
-        return await context.send(embed=scores.get_embed(context.author, f"{context.author.name}'s Scores (Search Term: `{search_term}`)"))
+        title = f"Scores for {context.author.name} Matching Term: {search_term}"
+
+        return await context.send(
+            embed=scores.get_embed(context.author, title),
+            view=ScoresButtons(
+                author=context.author,
+                score_number=1,
+                title=title,
+                scores=scores
+            )
+        )
 
     @commands.hybrid_command(
-        name="always_fc",
-        description="stop being cyreu",
+        name="remove_all_scores",
+        description="Removes ALL recorded scores (CANNOT BE UNDONE).",
     )
     async def always_fc(self, context: Context):
         Database().remove_scores(context.author.id)
@@ -44,7 +58,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
     )
     async def never_fc(self, context: Context):
         if context.author.id not in {403305665113751572, 187907815711571977}:
-            return await context.send("You cannot become cyreu")
+            return await context.send("You cannot become cyreu!")
 
         with open("cyreu.csv", 'r') as file:
 
@@ -125,7 +139,8 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
 
         db.remove_score(context.author.id, beatmap_id, mods)
 
-        return await context.send(f"Score with beatmap ID `{beatmap_id}` and mods `{str(mods)}` was removed successfully!")
+        return await context.send(
+            f"Score with beatmap ID `{beatmap_id}` and mods `{str(mods)}` was removed successfully!")
 
     @commands.hybrid_command(
         name="track",
@@ -138,7 +153,6 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
             return await context.send(f"Invalid osu ID provided: `{osu_id}`.")
 
         Database().add_tracked(context.author.id, osu_id)
-
 
         return await context.send(f"Tracking user: `{user.username}`! (to untrack, use `/untrack`)")
 
@@ -273,4 +287,3 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
 
 async def setup(bot):
     await bot.add_cog(ScoreTracker(bot))
-

@@ -57,5 +57,3 @@ class TrackedUsers:
             embed.add_field(name="", value=tracked_user_string, inline=False)
 
         return embed
-
-
