@@ -1,4 +1,4 @@
-![image](https://github.com/expiracy/wysi-bot/assets/77588109/0e20c81a-3a8d-4b31-8aca-56b167a62491)# osu! Score Showcase Bot (+ other random stuff)
+# osu! Score Showcase Bot (+ other random stuff)
 
 ## Overview
 This bot was developed for showcasing osu! scores. 
