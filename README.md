@@ -1,4 +1,5 @@
-# osu! Score Showcase Bot (with other random features I add)
+# osu! Score Showcase Bot 
+## (with other random features I add)
 
 ## Overview
 This bot was developed for showcasing osu! scores. 
