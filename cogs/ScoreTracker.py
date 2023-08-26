@@ -192,13 +192,13 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         name="register",
         description="Register your account (this will give you the option to add >rs scores automatically)",
     )
-    async def register(self, context: Context, osu_id):
+    async def register(self, context: Context, osu_id_or_username):
         try:
-            user = await osu_api.user(osu_id, mode="osu")
+            user = await osu_api.user(osu_id_or_username, mode="osu")
         except ValueError:
-            return await context.send(f"Invalid osu user id provided: `{osu_id}`.")
+            return await context.send(f"Invalid argument provided: `{osu_id_or_username}` :(")
 
-        Database().add_user(context.author.id, osu_id, user.username)
+        Database().add_user(context.author.id, user.id, user.username)
 
         return await context.send(f"Account linked to osu username: `{user.username}`\n"
                                   f"`>rs` will now provide an option to automatically add a score!\n"
@@ -225,23 +225,28 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         name="track",
         description="Tracks a profile's PP"
     )
-    async def track(self, context: Context, osu_id):
+    async def track(self, context: Context, osu_id_or_username):
         try:
-            user = await osu_api.user(osu_id, mode="osu")
+            user = await osu_api.user(osu_id_or_username, mode="osu")
         except ValueError:
-            return await context.send(f"Invalid osu ID provided: `{osu_id}` :(")
+            return await context.send(f"Invalid argument provided: `{osu_id_or_username}` :(")
 
-        Database().add_tracked(context.author.id, osu_id)
+        Database().add_tracked(context.author.id, user.id)
 
         return await context.send(f"Tracking user: `{user.username}`! (to untrack, use `/untrack`)")
 
     @commands.hybrid_command(
         name="untrack",
-        description="Untrack osu ID",
+        description="Untrack osu player",
     )
-    async def untrack(self, context: Context, osu_id):
-        Database().remove_tracked(context.author.id, osu_id)
-        return await context.send(f"Untracked user with osu ID: `{osu_id}`!")
+    async def untrack(self, context: Context, osu_id_or_username):
+        try:
+            user = await osu_api.user(osu_id_or_username, mode="osu")
+        except ValueError:
+            return await context.send(f"Invalid argument provided: `{osu_id_or_username}` :(")
+
+        Database().remove_tracked(context.author.id, user.id)
+        return await context.send(f"Untracked user: `{user.username}`!")
 
     @commands.hybrid_command(
         name="remove_all_scores",

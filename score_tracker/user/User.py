@@ -10,9 +10,9 @@ class User:
         self.image = image
 
     @staticmethod
-    async def fetch_user(osu_id, session=None):
+    async def fetch_user(value, session=None):
         try:
-            return await osu_api.user(osu_id, mode="osu")
+            return await osu_api.user(value, mode="osu")
         except ValueError:
             return None
 
