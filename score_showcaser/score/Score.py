@@ -29,5 +29,3 @@ class Score:
         embed.add_field(name="", value=str(self), inline=False)
 
         return embed
-
-

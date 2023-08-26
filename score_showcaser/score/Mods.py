@@ -12,7 +12,7 @@ class Mods:
             self.string = self.decode(mods)
 
         elif type(mods) == str:
-            if mods == "No Mod":
+            if mods == "No Mod" or mods == "NM":
                 mods = ""
 
             self.string = mods

@@ -1,9 +1,9 @@
 import discord
 
-from score_tracker.Database import Database
-from score_tracker.score.Scores import Scores
-from score_tracker.user.TrackedUsers import TrackedUsers
-from score_tracker.user.User import User
+from score_showcaser.Database import Database
+from score_showcaser.score.Scores import Scores
+from score_showcaser.user.TrackedUsers import TrackedUsers
+from score_showcaser.user.User import User
 
 
 class ProfileButtons(discord.ui.View):
@@ -206,4 +206,3 @@ class AutoScoreButtons(discord.ui.View):
     async def ignore(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id: return
         await interaction.response.edit_message(delete_after=True)
-

@@ -4,16 +4,16 @@ import sqlite3
 
 import aiohttp
 
-from score_tracker.score.Mods import Mods
-from score_tracker.score.Beatmap import Beatmap
-from score_tracker.score.BeatmapSet import BeatmapSet
-from score_tracker.score.Score import Score
-from score_tracker.score.ScoreID import ScoreID
-from score_tracker.score.ScoreInfo import ScoreInfo
-from score_tracker.score.Scores import Scores
-from score_tracker.user.Profile import Profile
-from score_tracker.user.TrackedUsers import TrackedUsers
-from score_tracker.user.User import User
+from score_showcaser.score.Beatmap import Beatmap
+from score_showcaser.score.BeatmapSet import BeatmapSet
+from score_showcaser.score.Mods import Mods
+from score_showcaser.score.Score import Score
+from score_showcaser.score.ScoreID import ScoreID
+from score_showcaser.score.ScoreInfo import ScoreInfo
+from score_showcaser.score.Scores import Scores
+from score_showcaser.user.Profile import Profile
+from score_showcaser.user.TrackedUsers import TrackedUsers
+from score_showcaser.user.User import User
 
 
 class Database:
@@ -237,7 +237,9 @@ class Database:
                         ScoreInfo(pp, accuracy, combo, ar, cs, speed),
                         Beatmap(beatmap_id, version, difficulty, max_combo, beatmap_set_id),
                         BeatmapSet(beatmap_set_id, title, artist, image, mapper))
-                  for (beatmap_id, mods, pp, accuracy, combo, ar, cs, speed, version, difficulty, max_combo, beatmap_set_id, title, artist, image, mapper) in scores]
+                  for (
+                  beatmap_id, mods, pp, accuracy, combo, ar, cs, speed, version, difficulty, max_combo, beatmap_set_id,
+                  title, artist, image, mapper) in scores]
 
         return Scores(scores, title)
 
@@ -324,5 +326,12 @@ class Database:
 
         self.connection.commit()
 
-    def get_user_profile(self, discord_id):
-        return Profile(self.get_scores(discord_id))
+    async def get_user_profile(self, discord_id):
+        osu_id = self.get_osu_id(discord_id)
+        user = await User.fetch_user(osu_id)
+        if user:
+            image = user.avatar_url
+        else:
+            image = ""
+
+        return Profile(self.get_scores(discord_id), image)

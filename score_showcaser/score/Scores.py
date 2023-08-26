@@ -20,10 +20,9 @@ class Scores:
         upper = lower + Scores.SCORES_PER_PAGE
 
         for i, score in enumerate(self.scores[lower:upper]):
+            if i == 0:
+                embed.set_thumbnail(url=score.beatmap_set.image)
+
             embed.add_field(name="", value=f"**{i + lower + 1})** {str(score)}", inline=False)
 
         return embed
-
-
-
-

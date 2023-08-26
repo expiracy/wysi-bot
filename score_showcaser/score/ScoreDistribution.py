@@ -1,6 +1,6 @@
 import discord
 
-from score_tracker.score.Mods import Mods
+from score_showcaser.score.Mods import Mods
 
 
 class ScoreDistribution:
@@ -32,6 +32,6 @@ class ScoreDistribution:
     def embed(self, user):
         embed = discord.Embed(colour=user.colour)
         embed.set_thumbnail(url=user.avatar.url)
-        embed.set_author(name=f"{user.name}'s Score Distribution", icon_url=user.avatar.url)
+        embed.set_author(name=f"{user.name}'s Score Type Distribution", icon_url=user.avatar.url)
         embed.add_field(name="", value=str(self), inline=False)
         return embed

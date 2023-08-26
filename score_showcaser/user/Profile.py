@@ -3,16 +3,16 @@ from collections import defaultdict
 
 import discord
 
-
-from score_tracker.score.ScoreDistribution import ScoreDistribution
+from score_showcaser.score.ScoreDistribution import ScoreDistribution
 
 
 class Profile:
-    def __init__(self, scores):
+    def __init__(self, scores, image):
         self.scores = scores
         self.accuracy = 0.0
         self.raw_pp = 0.0
         self.weighted_pp = 0.0
+        self.image = image
 
         self.score_distribution = ScoreDistribution(self.scores.count(), 0, defaultdict(int))
         self.calculate_stats(scores)
@@ -35,7 +35,8 @@ class Profile:
             self.accuracy /= (20 * (1 - math.pow(0.95, scores.count())))
 
         self.accuracy = round(self.accuracy, 2)
-        self.weighted_pp = round(self.weighted_pp, 1)
+        self.weighted_pp = round(self.weighted_pp, 2)
+        self.raw_pp = round(self.raw_pp, 2)
 
     def __str__(self):
         return (f"**Accuracy:** {self.accuracy} %\n"
@@ -43,8 +44,11 @@ class Profile:
                 f"**Raw PP:** {self.raw_pp} PP")
 
     def embed(self, user):
+        if not self.image:
+            self.image = user.avatar.url
+
         embed = discord.Embed(colour=user.colour)
-        embed.set_thumbnail(url=user.avatar.url)
-        embed.set_author(name=f"{user.name}'s Profile", icon_url=user.avatar.url)
+        embed.set_thumbnail(url=self.image)
+        embed.set_author(name=f"{user.name}'s Scores Showcase Profile", icon_url=user.avatar.url)
         embed.add_field(name="", value=str(self), inline=False)
         return embed

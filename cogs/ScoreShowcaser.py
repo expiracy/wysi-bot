@@ -6,19 +6,46 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from WYSIBot import osu_api
-from score_tracker.Database import Database
-from score_tracker.buttons.Buttons import ProfileButtons, TrackedUsersButtons, ScoresButtons, AutoScoreButtons
-from score_tracker.score.Beatmap import Beatmap
-from score_tracker.score.BeatmapSet import BeatmapSet
-from score_tracker.score.Mods import Mods
-from score_tracker.score.Score import Score
-from score_tracker.score.ScoreID import ScoreID
-from score_tracker.score.ScoreInfo import ScoreInfo
+from score_showcaser.Database import Database
+from score_showcaser.buttons.Buttons import ProfileButtons, TrackedUsersButtons, ScoresButtons, AutoScoreButtons
+from score_showcaser.score.Beatmap import Beatmap
+from score_showcaser.score.BeatmapSet import BeatmapSet
+from score_showcaser.score.Mods import Mods
+from score_showcaser.score.Score import Score
+from score_showcaser.score.ScoreID import ScoreID
+from score_showcaser.score.ScoreInfo import ScoreInfo
 
 
-class ScoreTracker(commands.Cog, name="ScoreTracker"):
+class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.hybrid_command(
+        name="wysi_help",
+        description="Info about the bot and its commands"
+    )
+    async def help(self, context: Context):
+        help = ('**Info**\n'
+                'This bot was primarily developed for `cyreu` due to his allergy to standard and it now means he can showcase his scores.\n'
+                'However, it can also be used as a score showcase for your best non high pp scores or to speedrun up to someones pp.\n'
+                '\n'
+                '**Commands**\n'
+                '`/register` - will automatically give you the option to add scores from `>rs`\n'
+                '`/unregister` - will stop giving you the `rs` add score option\n'
+                '`/add_score_manual` - allows you to manually add a score\n'
+                '`/add_score_auto` - allows you to add a score via score ID\n'
+                '`/scores` - will show all your showcased scores\n'
+                '`/search_scores` - will search your showcased scores\n'
+                '`/track` - will allow you to compare your showcase profile\'s accuracy and pp to other user\'s real profiles\n'
+                '`/untrack` - untrack user\n'
+                '`/profile` - will show you your profile based off ONLY showcased scores\n'
+                '`/remove_all_scores` - removes all showcased scores\n'
+                '`/leah_kate` - <3\n'
+                '`/roll` - roll a number\n'
+                '`/bonus_pp` - calculate maps -> bonus pp or bonus pp -> maps\n'
+                '`/become_cyreu` - sorry you can\'t do this\n')
+
+        return await context.send(help)
 
     @commands.hybrid_command(
         name="become_cyreu",
@@ -84,11 +111,11 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
                 db.add_score(score)
 
     @commands.hybrid_command(
-        name="get_scores",
-        description="Displays a user's scores",
+        name="scores",
+        description="Displays a user's showcased scores",
     )
-    async def get_scores(self, context: Context, score_number=1):
-        scores = Database().get_scores(context.author.id, f"{context.author.name}'s Scores")
+    async def get_showcased_scores(self, context: Context, score_number=1):
+        scores = Database().get_scores(context.author.id, f"{context.author.name}'s Scores Showcase")
 
         if not scores:
             return await context.send(f"No scores added for `{context.author.name}` :(\n"
@@ -125,7 +152,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
     )
     async def tracked(self, context, tracked_user_number=1):
         db = Database()
-        profile = db.get_user_profile(context.author.id)
+        profile = await db.get_user_profile(context.author.id)
         tracked_users = await db.get_tracked_users(context.author.id)
 
         return await context.send(
@@ -135,11 +162,11 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
 
     @commands.hybrid_command(
         name="profile",
-        description="Gets profile stats for saved scores"
+        description="Gets profile stats for showcased scores ONLY"
     )
     async def profile(self, context: Context):
         db = Database()
-        profile = db.get_user_profile(context.author.id)
+        profile = await db.get_user_profile(context.author.id)
         tracked_users = await db.get_tracked_users(context.author.id)
 
         return await context.send(
@@ -148,11 +175,11 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         )
 
     @commands.hybrid_command(
-        name="add_score",
+        name="add_score_manual",
         description="Adds a score (scores are uniquely identified by beatmap ID and mods)",
     )
-    async def add_score(self, context: Context, beatmap_id: int, pp: float, accuracy: float, combo: int,
-                        mods=None, ar=None, cs=None, speed=None):
+    async def manual_add_score(self, context: Context, beatmap_id: int, pp: float, accuracy: float, combo: int,
+                               mods=None, ar=None, cs=None, speed=None):
 
         db = Database()
         mods = Mods(mods)
@@ -185,7 +212,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         db.add_score(score)
 
         return await context.send(
-            embed=score.embed(context.author, f"Score added or replaced!"),
+            embed=score.embed(context.author, f"Score added to {context.author.name}'s scores showcase"),
         )
 
     @commands.hybrid_command(
@@ -219,7 +246,8 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
 
         db.remove_score(score_id)
 
-        return await context.send(f"Score with beatmap ID `{beatmap_id}` and mods `{str(mods)}` was removed successfully!")
+        return await context.send(
+            f"Score with beatmap ID `{beatmap_id}` and mods `{str(mods)}` was removed successfully!")
 
     @commands.hybrid_command(
         name="track",
@@ -234,6 +262,29 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         Database().add_tracked(context.author.id, user.id)
 
         return await context.send(f"Tracking user: `{user.username}`! (to untrack, use `/untrack`)")
+
+    @commands.hybrid_command(
+        name="add_score_auto",
+        description="Add a score by ID (found on the score page)",
+    )
+    async def auto_add_score(self, context: Context, score_id):
+        db = Database()
+
+        try:
+            score = await osu_api.score(mode="osu", score_id=score_id)
+        except ValueError:
+            return await context.send(f"Invalid score ID provided: `{score_id}` :(")
+
+        score_id = ScoreID(context.author.id, score.beatmap.id, Mods(str(score.mods)))
+        score_info = ScoreInfo(round(score.pp, 2), round(score.accuracy * 100, 2), score.max_combo, None, None, None)
+        beatmap = await Beatmap.from_id(score.beatmap.id)
+        beatmap_set = await BeatmapSet.from_id(score.beatmapset.id)
+        score = Score(score_id, score_info, beatmap, beatmap_set)
+
+        db.add_score(score)
+
+        return await context.send(
+            embed=score.embed(context.author, f"Score added to {context.author.name}'s scores showcase"))
 
     @commands.hybrid_command(
         name="untrack",
@@ -254,7 +305,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
     )
     async def always_fc(self, context: Context):
         Database().remove_scores(context.author.id)
-        return await context.send(f"All scores removed for {context.author.name}")
+        return await context.send(f"All scores removed for user `{context.author.name}`")
 
     @commands.hybrid_command(
         name="unregister",
@@ -267,7 +318,7 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
     @commands.command(
         name="rs",
     )
-    async def auto_add_score(self, context: Context, arg=None):
+    async def rs_add_score(self, context: Context, arg=None):
         db = Database()
 
         osu_id = db.get_osu_username(context.author.id)
@@ -283,7 +334,8 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         # Gets the RS message embed
         rs_message = context.channel.last_message
 
-        while not rs_message.embeds and (rs_message.author.id != 289066747443675143 or rs_message.content[32:-3] not in possible_names):
+        while not rs_message.embeds and (
+                rs_message.author.id != 289066747443675143 or rs_message.content[32:-3] not in possible_names):
             await asyncio.sleep(1)
             rs_message = context.channel.last_message
 
@@ -314,10 +366,10 @@ class ScoreTracker(commands.Cog, name="ScoreTracker"):
         score = Score(score_id, score_info, beatmap, beatmap_set)
 
         return await context.send(
-            embed=score.embed(context.author, f"Add score to {context.author.name}?"),
+            embed=score.embed(context.author, f"Add score to {context.author.name}'s scores showcase?"),
             view=AutoScoreButtons(context.author, score)
         )
 
 
 async def setup(bot):
-    await bot.add_cog(ScoreTracker(bot))
+    await bot.add_cog(ScoreDisplayer(bot))

@@ -9,13 +9,6 @@ class Things(commands.Cog, name="Things"):
         self.bot = bot
 
     @commands.hybrid_command(
-        name="wysi",
-        description="when you see it",
-    )
-    async def wysi(self, context: Context):
-        return await context.send(f"WYSI")
-
-    @commands.hybrid_command(
         name="leah_kate",
         description="<3",
     )

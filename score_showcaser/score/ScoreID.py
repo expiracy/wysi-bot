@@ -3,4 +3,3 @@ class ScoreID:
         self.discord_id = discord_id
         self.beatmap_id = beatmap_id
         self.mods = mods
-        

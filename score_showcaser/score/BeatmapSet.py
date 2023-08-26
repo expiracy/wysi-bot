@@ -16,4 +16,5 @@ class BeatmapSet:
         except ValueError:
             return None
 
-        return BeatmapSet(beatmap_set_id, beatmap_set.title, beatmap_set.artist, beatmap_set.covers.list, beatmap_set.creator)
+        return BeatmapSet(beatmap_set_id, beatmap_set.title, beatmap_set.artist, beatmap_set.covers.list,
+                          beatmap_set.creator)
