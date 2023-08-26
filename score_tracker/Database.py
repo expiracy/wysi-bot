@@ -1,4 +1,5 @@
 import asyncio
+import os
 import sqlite3
 
 import aiohttp
@@ -17,7 +18,7 @@ from score_tracker.user.User import User
 
 class Database:
     def __init__(self):
-        self.connection = sqlite3.connect('./score_tracker/score_tracker.db')
+        self.connection = sqlite3.connect(f'{os.path.dirname(__file__)}/score_tracker.db')
         self.cursor = self.connection.cursor()
 
         self.create_tables()
