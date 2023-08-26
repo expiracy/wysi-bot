@@ -25,25 +25,26 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         description="Info about the bot and its commands"
     )
     async def help(self, context: Context):
-        help = ('**Info**\n'
-                'This bot was primarily developed for `cyreu` due to his allergy to standard and it now means he can showcase his scores.\n'
-                'However, it can also be used as a score showcase for your best non high pp scores or to speedrun up to someones pp.\n'
-                '\n'
-                '**Commands**\n'
-                '`/register` - will automatically give you the option to add scores from `>rs`\n'
-                '`/unregister` - will stop giving you the `rs` add score option\n'
-                '`/add_score_manual` - allows you to manually add a score\n'
-                '`/add_score_auto` - allows you to add a score via score ID\n'
-                '`/scores` - will show all your showcased scores\n'
-                '`/search_scores` - will search your showcased scores\n'
-                '`/track` - will allow you to compare your showcase profile\'s accuracy and pp to other user\'s real profiles\n'
-                '`/untrack` - untrack user\n'
-                '`/profile` - will show you your profile based off ONLY showcased scores\n'
-                '`/remove_all_scores` - removes all showcased scores\n'
-                '`/leah_kate` - <3\n'
-                '`/roll` - roll a number\n'
-                '`/bonus_pp` - calculate maps -> bonus pp or bonus pp -> maps\n'
-                '`/become_cyreu` - sorry you can\'t do this\n')
+        help = ("**Info**\n"
+                "This bot was primarily developed for `cyreu` due to his allergy to standard and it now means he can showcase his scores.\n"
+                "However, it can also be used as a score showcase for your best non high pp scores or to speedrun up to someones pp.\n"
+                "\n"
+                "**Commands**\n"
+                "`/register` - will automatically give you the option to add scores from `>rs`\n"
+                "`/unregister` - will stop giving you the `rs` add score option\n"
+                "`/add_score_manual` - allows you to manually add a score\n"
+                "`/add_score_auto` - allows you to add a score via score ID\n"
+                "`/scores_showcase` - will show all your showcased scores\n"
+                "`/search_scores_showcase` - will search your showcased scores\n"
+                "`/tracked` - will allow you to compare your showcase profile's accuracy and pp to other user\"s real profiles\n"
+                "`/track` - adds a user to show on `/tracked`\n"
+                "`/untrack` - untrack user\n"
+                "`/profile_showcase` - will show you your profile based off ONLY showcased scores\n"
+                "`/remove_all_scores` - removes all showcased scores\n"
+                "`/leah_kate` - <3\n"
+                "`/roll` - roll a number\n"
+                "`/bonus_pp` - calculate maps -> bonus pp or bonus pp -> maps\n"
+                "`/become_cyreu` - sorry you can\"t do this\n")
 
         return await context.send(help)
 
@@ -111,7 +112,7 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
                 db.add_score(score)
 
     @commands.hybrid_command(
-        name="scores",
+        name="scores_showcase",
         description="Displays a user's showcased scores",
     )
     async def get_showcased_scores(self, context: Context, score_number=1):
@@ -128,7 +129,7 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         )
 
     @commands.hybrid_command(
-        name="search_scores",
+        name="search_scores_showcase",
         description="Searches for scores",
     )
     async def search_scores(self, context: Context, search_term: str):
@@ -161,7 +162,7 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         )
 
     @commands.hybrid_command(
-        name="profile",
+        name="profile_showcase",
         description="Gets profile stats for showcased scores ONLY"
     )
     async def profile(self, context: Context):
