@@ -1,13 +1,23 @@
+import asyncio
 import sqlite3
 
-from score_tracker import ScoreMods
-from score_tracker.ScoreBeatmap import ScoreBeatmap
-from score_tracker.ScoreBeatmapSet import ScoreBeatmapSet
+import aiohttp
+
+from score_tracker.score.Mods import Mods
+from score_tracker.score.Beatmap import Beatmap
+from score_tracker.score.BeatmapSet import BeatmapSet
+from score_tracker.score.Score import Score
+from score_tracker.score.ScoreID import ScoreID
+from score_tracker.score.ScoreInfo import ScoreInfo
+from score_tracker.score.Scores import Scores
+from score_tracker.user.Profile import Profile
+from score_tracker.user.TrackedUsers import TrackedUsers
+from score_tracker.user.User import User
 
 
 class Database:
     def __init__(self):
-        self.connection = sqlite3.connect('score_tracker.db')
+        self.connection = sqlite3.connect('./score_tracker/score_tracker.db')
         self.cursor = self.connection.cursor()
 
         self.create_tables()
@@ -71,14 +81,19 @@ class Database:
 
         self.connection.commit()
 
-    def get_score(self, discord_id: int, beatmap_id: int, mods: ScoreMods):
+    def get_score_info(self, score_id: ScoreID):
         self.cursor.execute('''
-            SELECT mods, pp, accuracy, combo, ar, cs, speed
+            SELECT pp, accuracy, combo, ar, cs, speed
             FROM Scores
             WHERE discord_id=? AND beatmap_id=? AND mods=?;
-        ''', (discord_id, beatmap_id, int(mods)))
+        ''', (score_id.discord_id, score_id.beatmap_id, int(score_id.mods)))
 
-        return self.cursor.fetchone()
+        score_info = self.cursor.fetchone()
+
+        if not score_info:
+            return None
+
+        return ScoreInfo(*score_info)
 
     def get_beatmap_set(self, beatmap_set_id: int):
         self.cursor.execute('''
@@ -87,13 +102,67 @@ class Database:
             WHERE beatmap_set_id=?;
         ''', (beatmap_set_id,))
 
-        return self.cursor.fetchone()
+        beatmap_set = self.cursor.fetchone()
 
-    def remove_score(self, discord_id, beatmap_id, mods):
+        if not beatmap_set:
+            return None
+
+        return BeatmapSet(*beatmap_set)
+
+    def get_beatmap(self, beatmap_id: int):
+        self.cursor.execute('''
+            SELECT beatmap_id, version, difficulty, max_combo, beatmap_set_id
+            FROM Beatmaps
+            WHERE beatmap_id=?;
+        ''', (beatmap_id,))
+
+        beatmap = self.cursor.fetchone()
+
+        if not beatmap:
+            return None
+
+        return Beatmap(*beatmap)
+
+    async def get_tracked_users(self, discord_id):
+        self.cursor.execute('''
+            SELECT osu_id FROM Tracking
+            WHERE discord_id=?;
+        ''', (discord_id,))
+
+        tracked_user_ids = self.cursor.fetchall()
+
+        if not tracked_user_ids:
+            return None
+
+        tracked_users = []
+
+        async with aiohttp.ClientSession() as session:
+            tasks = [User.fetch_user(osu_id[0], session) for osu_id in tracked_user_ids]
+            results = await asyncio.gather(*tasks)
+
+            for user in results:
+                if user:
+                    tracked_users.append(
+                        User(user.username, user.id, user.statistics.pp, user.statistics.hit_accuracy, user.avatar_url)
+                    )
+
+        return TrackedUsers(tracked_users)
+
+    def get_score(self, score_id: ScoreID):
+        score_info = self.get_score_info(score_id)
+        beatmap = self.get_beatmap(score_id.beatmap_id)
+        beatmap_set = self.get_beatmap_set(beatmap.set_id)
+
+        if not score_info:
+            return None
+
+        return Score(score_id, score_info, beatmap, beatmap_set)
+
+    def remove_score(self, score_id):
         self.cursor.execute('''
             DELETE FROM Scores
             WHERE discord_id=? AND beatmap_id=? AND mods=?;
-        ''', (discord_id, beatmap_id, int(mods)))
+        ''', (score_id.discord_id, score_id.beatmap_id, int(score_id.mods)))
 
         self.connection.commit()
 
@@ -105,44 +174,18 @@ class Database:
 
         self.connection.commit()
 
-    def get_beatmap(self, beatmap_id: int):
+    def add_beatmap(self, beatmap: Beatmap):
         self.cursor.execute('''
-            SELECT *
-            FROM Beatmaps
-            WHERE beatmap_id=?;
-        ''', (beatmap_id,))
-
-        return self.cursor.fetchone()
-
-    def search_scores(self, discord_id, substring):
-        self.cursor.execute('''
-            SELECT Scores.beatmap_id, mods, pp, accuracy, combo, ar, cs, speed,
-                    version, difficulty, max_combo, 
-                    Beatmaps.beatmap_set_id, title, artist, image, mapper 
-            FROM Scores, Beatmaps, BeatmapSets
-            WHERE discord_id=? AND title LIKE '%' || ? || '%'  AND Scores.beatmap_id=Beatmaps.beatmap_id AND Beatmaps.beatmap_set_id=BeatmapSets.beatmap_set_id
-            ORDER BY PP DESC, accuracy DESC;
-        ''', (discord_id, substring))
-
-        return self.cursor.fetchall()
-
-    def add_beatmap(self, beatmap: ScoreBeatmap, beatmap_set_id: int):
-        if self.get_beatmap(beatmap.beatmap_id):
-            return
-
-        self.cursor.execute('''
-            INSERT INTO Beatmaps
+            INSERT OR REPLACE INTO Beatmaps
             VALUES (?, ?, ?, ?, ?);
-        ''', (beatmap.beatmap_id, beatmap.version, beatmap.difficulty_rating, beatmap.max_combo, beatmap_set_id))
+        ''', (beatmap.id, beatmap.version, beatmap.difficulty_rating, beatmap.max_combo, beatmap.set_id))
 
         self.connection.commit()
 
-    def add_beatmap_set(self, beatmap_set: ScoreBeatmapSet):
-        if self.get_beatmap_set(beatmap_set.beatmap_set_id):
-            return
+    def add_beatmap_set(self, beatmap_set: BeatmapSet):
 
         self.cursor.execute('''
-            INSERT INTO BeatmapSets
+            INSERT OR REPLACE INTO BeatmapSets
             VALUES (?, ?, ?, ?, ?);
         ''', (beatmap_set.beatmap_set_id, beatmap_set.title, beatmap_set.artist, beatmap_set.image, beatmap_set.mapper))
 
@@ -164,43 +207,61 @@ class Database:
 
         self.connection.commit()
 
-    def get_tracked(self, discord_id):
-        self.cursor.execute('''
-            SELECT osu_id FROM Tracking
-            WHERE discord_id=?;
-        ''', (discord_id,))
-
-        return self.cursor.fetchall()
-
-    def add_score(self, score, discord_id, keep_highest=False):
-        existing_score = self.get_score(discord_id, score.beatmap.beatmap_id, score.mods)
-
-        if not keep_highest or not existing_score or score.pp > existing_score[1]:
-            print(f"Added score: {score.beatmap_set.title}")
+    def get_scores(self, discord_id, title="Scores", search_term=""):
+        if search_term:
             self.cursor.execute('''
-                INSERT OR REPLACE INTO Scores(discord_id, beatmap_id, mods, pp, accuracy, combo, ar, cs, speed)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-            ''', (
-                discord_id, score.beatmap.beatmap_id, int(score.mods), score.pp, score.accuracy, score.combo, score.ar,
-                score.cs, score.speed))
+               SELECT Scores.beatmap_id, mods, pp, accuracy, combo, ar, cs, speed,
+                       version, difficulty, max_combo, 
+                       Beatmaps.beatmap_set_id, title, artist, image, mapper 
+               FROM Scores, Beatmaps, BeatmapSets
+               WHERE discord_id=? AND Scores.beatmap_id=Beatmaps.beatmap_id AND Beatmaps.beatmap_set_id=BeatmapSets.beatmap_set_id AND title LIKE '%' || ? || '%'
+               ORDER BY PP DESC, accuracy DESC;
+           ''', (discord_id, search_term))
+        else:
+            self.cursor.execute('''
+                SELECT Scores.beatmap_id, mods, pp, accuracy, combo, ar, cs, speed,
+                        version, difficulty, max_combo, 
+                        Beatmaps.beatmap_set_id, title, artist, image, mapper 
+                FROM Scores, Beatmaps, BeatmapSets
+                WHERE discord_id=? AND Scores.beatmap_id=Beatmaps.beatmap_id AND Beatmaps.beatmap_set_id=BeatmapSets.beatmap_set_id
+                ORDER BY PP DESC, accuracy DESC;
+            ''', (discord_id,))
 
-            self.connection.commit()
+        scores = self.cursor.fetchall()
 
-            return True
+        if not scores:
+            return None
 
-        return False
+        scores = [Score(ScoreID(discord_id, beatmap_id, Mods(mods)),
+                        ScoreInfo(pp, accuracy, combo, ar, cs, speed),
+                        Beatmap(beatmap_id, version, difficulty, max_combo, beatmap_set_id),
+                        BeatmapSet(beatmap_set_id, title, artist, image, mapper))
+                  for (beatmap_id, mods, pp, accuracy, combo, ar, cs, speed, version, difficulty, max_combo, beatmap_set_id, title, artist, image, mapper) in scores]
 
-    def get_scores(self, discord_id: int):
+        return Scores(scores, title)
+
+    def add_score(self, score: Score, keep_highest=False):
+        last_score_info = self.get_score_info(score.id)
+
+        if not (not last_score_info or not keep_highest or (keep_highest and score.info.pp > last_score_info.pp)):
+            print("Score not added")
+            return False
+
         self.cursor.execute('''
-            SELECT Scores.beatmap_id, mods, pp, accuracy, combo, ar, cs, speed,
-                    version, difficulty, max_combo, 
-                    Beatmaps.beatmap_set_id, title, artist, image, mapper 
-            FROM Scores, Beatmaps, BeatmapSets
-            WHERE discord_id=? AND Scores.beatmap_id=Beatmaps.beatmap_id AND Beatmaps.beatmap_set_id=BeatmapSets.beatmap_set_id
-            ORDER BY PP DESC, accuracy DESC;
-        ''', (discord_id,))
+            INSERT OR REPLACE INTO Scores(discord_id, beatmap_id, mods, pp, accuracy, combo, ar, cs, speed)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        ''', (
+            score.id.discord_id, score.id.beatmap_id, int(score.id.mods),
+            score.info.pp, score.info.accuracy, score.info.combo, score.info.ar, score.info.cs, score.info.speed
+        ))
+        self.connection.commit()
 
-        return self.cursor.fetchall()
+        self.add_beatmap(score.beatmap)
+        self.add_beatmap_set(score.beatmap_set)
+
+        print(f"Added score: {score.beatmap_set.title}")
+
+        return True
 
     def get_discord_id(self, osu_username):
         self.cursor.execute('''
@@ -208,15 +269,43 @@ class Database:
             WHERE osu_username=?;
         ''', (osu_username,))
 
-        return self.cursor.fetchone()
+        discord_id = self.cursor.fetchone()
 
-    def get_osu_username(self, discord_id):
+        if not discord_id:
+            return None
+
+        return discord_id[0]
+
+    def get_osu_id(self, discord_id):
         self.cursor.execute('''
-            SELECT osu_username FROM Users
+            SELECT osu_id FROM Users
             WHERE discord_id=?;
         ''', (discord_id,))
 
-        return self.cursor.fetchone()
+        osu_id = self.cursor.fetchone()
+
+        if not osu_id:
+            return None
+
+        return osu_id[0]
+
+    async def get_osu_usernames(self, discord_id):
+        osu_id = self.get_osu_id(discord_id)
+        user = await User.fetch_user(osu_id)
+        return set(user.account_history).union({user.username})
+
+    def get_osu_username(self, discord_id):
+        self.cursor.execute('''
+            SELECT osu_id FROM Users
+            WHERE discord_id=?;
+        ''', (discord_id,))
+
+        username = self.cursor.fetchone()
+
+        if not username:
+            return None
+
+        return username[0]
 
     def add_user(self, discord_id, osu_id, osu_username):
         self.cursor.execute('''
@@ -225,3 +314,14 @@ class Database:
         ''', (discord_id, osu_id, osu_username))
 
         self.connection.commit()
+
+    def remove_user(self, discord_id):
+        self.cursor.execute('''
+            DELETE FROM Users
+            WHERE discord_id=?;
+        ''', (discord_id,))
+
+        self.connection.commit()
+
+    def get_user_profile(self, discord_id):
+        return Profile(self.get_scores(discord_id))

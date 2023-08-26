@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 
-class Fun(commands.Cog, name="Fun"):
+class Things(commands.Cog, name="Things"):
     def __init__(self, bot):
         self.bot = bot
 
@@ -14,13 +14,6 @@ class Fun(commands.Cog, name="Fun"):
     )
     async def wysi(self, context: Context):
         return await context.send(f"WYSI")
-
-    @commands.hybrid_command(
-        name="karan",
-        description="nasa",
-    )
-    async def karan(self, context: Context):
-        return await context.send(f"nasa")
 
     @commands.hybrid_command(
         name="leah_kate",
@@ -42,12 +35,11 @@ class Fun(commands.Cog, name="Fun"):
         description="Roll for 727",
     )
     async def roll(self, context: Context, upper_bound=1000):
-        if context.author.id == 187907815711571977:
-            return await context.send(f"{context.author.mention} rolled 727 with an upper bound of {upper_bound}!")
+        if context.author.id == 187907815711571977 and upper_bound >= 727:
+            return await context.send(f"Roll: `727` (`0 <= n <= {upper_bound}`)")
 
-        return await context.send(
-            f"{context.author.mention} rolled {random.randint(0, upper_bound)} with an upper bound of {upper_bound}!")
+        return await context.send(f"Roll: `{random.randint(0, upper_bound)}` (`0 <= n <= {upper_bound}`)")
 
 
 async def setup(bot):
-    await bot.add_cog(Fun(bot))
+    await bot.add_cog(Things(bot))

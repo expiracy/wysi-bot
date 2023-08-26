@@ -1,4 +1,4 @@
-class ScoreMods:
+class Mods:
     mod_order = ["HD", "DT", "NC", "HT", "HR", "FL", "EZ", "FL", "SD", "RL", "SO", "PF", "NF"]
 
     mod_values = {"": 0}
@@ -47,7 +47,7 @@ class ScoreMods:
 
             mod = mods[i: i + 2]
 
-            if mod in impossible or mod not in ScoreMods.mod_values:
+            if mod in impossible or mod not in Mods.mod_values:
                 return -1
 
             if mod in conditional_mods:
@@ -55,7 +55,7 @@ class ScoreMods:
 
             impossible.add(mod)
 
-            res += ScoreMods.mod_values[mod]
+            res += Mods.mod_values[mod]
 
             i += 2
 
@@ -68,7 +68,7 @@ class ScoreMods:
 
         while code > 0:
             if 1 & code == 1:
-                res += ScoreMods.mod_order[i]
+                res += Mods.mod_order[i]
 
             i += 1
             code >>= 1
@@ -76,13 +76,13 @@ class ScoreMods:
         return res
 
     def __str__(self):
-        return self.string
+        return "No Mod" if self.string == "" else self.string
 
     def __int__(self):
         return self.code
 
 
 if __name__ == '__main__':
-    x = ScoreMods.encode("HDDTHR")
+    x = Mods.encode("HDDTHR")
     print(x)
-    print(ScoreMods.decode(x))
+    print(Mods.decode(x))
