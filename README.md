@@ -1,5 +1,4 @@
-# osu! Score Showcase Bot 
-(with other random features I add)
+# osu! Score Showcase Bot (+ other random stuff)
 
 ## Overview
 This bot was developed for showcasing osu! scores. 
@@ -16,7 +15,7 @@ It's designed to highlight the best non-high pp scores and enable users to compa
 - `/untrack`: Untracks a user.
 - `/profile_showcase`: Shows your profile based only on showcased scores.
 - `/remove_all_scores`: Removes all showcased scores.
-- `/leah_kate`: A little love for Leah Kate! ❤️
+- `/leah_kate`: L*ah Kte
 - `/roll`: Roll a number.
 - `/bonus_pp`: Calculate maps -> bonus pp or bonus pp -> maps.
 - `/become_cyreu`: Sorry, you can't do this.
