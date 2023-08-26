@@ -30,8 +30,8 @@ It's designed to highlight the best non-high pp scores and enable users to compa
 7. Have fun with the bot's various commands and features!
 
 ## Images
-![add_score_rs](https://cdn.discordapp.com/attachments/1141528106390265916/1145121900679417896/image.png)
-![scores_showcase](https://cdn.discordapp.com/attachments/1141528106390265916/1145120983540310086/image.png)
+![scores_showcase](https://cdn.discordapp.com/attachments/1141528106390265916/1145121900679417896/image.png)
+![add_score_rs](https://cdn.discordapp.com/attachments/1141528106390265916/1145121396779913388/image.png)
 ![tracked](https://cdn.discordapp.com/attachments/1141528106390265916/1145122186441523210/image.png)
 ![profile_showcase](https://cdn.discordapp.com/attachments/1141528106390265916/1145121699134705786/image.png)
 
