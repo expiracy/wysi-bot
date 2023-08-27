@@ -19,7 +19,7 @@ It's designed to highlight the best non-high pp scores and enable users to compa
 - `/leah_kate`: L*ah Kte
 - `/roll`: Roll a number.
 - `/bonus_pp`: Calculate maps -> bonus pp or bonus pp -> maps.
-- `/become_cyreu`: Sorry, you can't do this.
+- `/add_scores_csv`: Adds scores from a CSV in the format `mods,map,combo,acc,pp`.
   
 ## Getting Started
 1. Use the `/register` command to enable adding future scores from `>rs` automatically.
@@ -37,5 +37,4 @@ It's designed to highlight the best non-high pp scores and enable users to compa
 
 ## Bugs/Requests
 Message expiracy on Discord
-
 
