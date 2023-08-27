@@ -38,4 +38,3 @@ It's designed to highlight the best non-high pp scores and enable users to compa
 ## Bugs/Requests
 Message expiracy on Discord
 
-
