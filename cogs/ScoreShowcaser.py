@@ -5,8 +5,6 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from score_showcaser.score.ScoresCsvParser import ScoresCsvParser
-from wysibot import osu_api
 from score_showcaser.Database import Database
 from score_showcaser.buttons.Buttons import ProfileButtons, TrackedUsersButtons, ScoresButtons, AutoScoreButtons
 from score_showcaser.score.Beatmap import Beatmap
@@ -15,6 +13,8 @@ from score_showcaser.score.Mods import Mods
 from score_showcaser.score.Score import Score
 from score_showcaser.score.ScoreID import ScoreID
 from score_showcaser.score.ScoreInfo import ScoreInfo
+from score_showcaser.score.ScoresCsvParser import ScoresCsvParser
+from wysibot import osu_api
 
 
 class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):

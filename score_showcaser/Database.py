@@ -238,8 +238,9 @@ class Database:
                         Beatmap(beatmap_id, version, difficulty, max_combo, beatmap_set_id),
                         BeatmapSet(beatmap_set_id, title, artist, image, mapper))
                   for (
-                  beatmap_id, mods, pp, accuracy, combo, ar, cs, speed, version, difficulty, max_combo, beatmap_set_id,
-                  title, artist, image, mapper) in scores]
+                      beatmap_id, mods, pp, accuracy, combo, ar, cs, speed, version, difficulty, max_combo,
+                      beatmap_set_id,
+                      title, artist, image, mapper) in scores]
 
         return Scores(scores, title)
 
@@ -262,7 +263,7 @@ class Database:
         self.add_beatmap(score.beatmap)
         self.add_beatmap_set(score.beatmap_set)
 
-        #print(f"Added score: {score.beatmap_set.title} [{score.beatmap.version}]")
+        # print(f"Added score: {score.beatmap_set.title} [{score.beatmap.version}]")
 
         return True
 

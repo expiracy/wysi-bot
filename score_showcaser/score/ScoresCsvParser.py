@@ -110,7 +110,6 @@ class ScoresCsvParser:
                     if (beatmap.mode.value == "osu"
                             and SequenceMatcher(None, beatmap.version, difficulty).ratio() >= 0.8
                             and combo <= beatmap.max_combo):
-
                         beatmap_id = beatmap.id
 
             if not beatmap_id:
@@ -135,6 +134,3 @@ class ScoresCsvParser:
             scores_list.append(score)
 
         return Scores(scores_list, f"Scores successfully parsed from CSV for user {user.name}")
-
-
-
