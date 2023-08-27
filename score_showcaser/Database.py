@@ -262,7 +262,7 @@ class Database:
         self.add_beatmap(score.beatmap)
         self.add_beatmap_set(score.beatmap_set)
 
-        print(f"Added score: {score.beatmap_set.title}")
+        #print(f"Added score: {score.beatmap_set.title} [{score.beatmap.version}]")
 
         return True
 

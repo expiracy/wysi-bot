@@ -1,4 +1,4 @@
-from WYSIBot import osu_api
+from wysibot import osu_api
 
 
 class BeatmapSet:

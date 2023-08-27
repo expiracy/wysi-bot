@@ -1,11 +1,12 @@
 import asyncio
-import csv
 import re
 
+import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from WYSIBot import osu_api
+from score_showcaser.score.ScoresCsvParser import ScoresCsvParser
+from wysibot import osu_api
 from score_showcaser.Database import Database
 from score_showcaser.buttons.Buttons import ProfileButtons, TrackedUsersButtons, ScoresButtons, AutoScoreButtons
 from score_showcaser.score.Beatmap import Beatmap
@@ -21,95 +22,21 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         self.bot = bot
 
     @commands.hybrid_command(
-        name="wysi_help",
-        description="Info about the bot and its commands"
+        name="add_scores_csv",
+        description="Add scores from csv file with exact column titles (mods,map,accuracy,combo,pp)"
     )
-    async def help(self, context: Context):
-        help = ("**Info**\n"
-                "This bot was primarily developed for `cyreu` due to his allergy to standard and it now means he can showcase his scores.\n"
-                "However, it can also be used as a score showcase for your best non high pp scores or to speedrun up to someones pp.\n"
-                "\n"
-                "**Commands**\n"
-                "`/register` - will automatically give you the option to add scores from `>rs`\n"
-                "`/unregister` - will stop giving you the `rs` add score option\n"
-                "`/add_score_manual` - allows you to manually add a score\n"
-                "`/add_score_auto` - allows you to add a score via score ID\n"
-                "`/scores_showcase` - will show all your showcased scores\n"
-                "`/search_scores_showcase` - will search your showcased scores\n"
-                "`/tracked` - will allow you to compare your showcase profile's accuracy and pp to other user\"s real profiles\n"
-                "`/track` - adds a user to show on `/tracked`\n"
-                "`/untrack` - untrack user\n"
-                "`/profile_showcase` - will show you your profile based off ONLY showcased scores\n"
-                "`/remove_all_scores` - removes all showcased scores\n"
-                "`/leah_kate` - <3\n"
-                "`/roll` - roll a number\n"
-                "`/bonus_pp` - calculate maps -> bonus pp or bonus pp -> maps\n"
-                "`/become_cyreu` - sorry you can\"t do this\n")
+    async def add_scores_csv(self, context: Context, scores_csv: discord.Attachment):
+        await context.send("Parsing scores from CSV... this may take a while... ")
+        scores = await ScoresCsvParser().parse_from_url(str(scores_csv), context.author)
 
-        return await context.send(help)
+        if not scores.scores:
+            return await context.send("Error parsing CSV. Are the column headings like the following?\n"
+                                      "`mods,map,accuracy,combo,pp`")
 
-    @commands.hybrid_command(
-        name="become_cyreu",
-        description="never fc"
-    )
-    async def never_fc(self, context: Context):
-        if context.author.id not in {403305665113751572, 187907815711571977}:
-            return await context.send("You cannot become `cyreu`! grrrr 🤬🤬")
-
-        db = Database()
-
-        with open("./resources/cyreu.csv", 'r') as file:
-            reader = csv.DictReader(file)
-            await context.send(f"{context.author.mention} has become `cyreu`!")
-
-            for row in reader:
-                split_mods = row['mods'].split(',')
-                mods = split_mods[0]
-
-                if mods[-1] == 'x':
-                    if mods[-5].isalpha():
-                        speed = float(mods[-4:-1])
-                        mods = mods[:-4]
-                    else:
-                        speed = float(mods[-5:-1])
-                        mods = mods[:-5]
-                else:
-                    speed = None
-
-                beatmap_id = row['id']
-
-                if not beatmap_id:
-                    break
-
-                mods = Mods(mods)
-                score_id = ScoreID(context.author.id, beatmap_id, mods)
-
-                if db.get_score_info(score_id):
-                    continue
-
-                pp = row['raw pp']
-                accuracy = row['acc']
-                combo = row['combo'].split('/')[0]
-
-                ar = re.findall("ar\d+.\d+", split_mods[1])
-                cs = re.findall("cs\d+.\d+", split_mods[1])
-
-                if ar:
-                    ar = float(ar[0][2:])
-                else:
-                    ar = None
-
-                if cs:
-                    cs = float(cs[0][2:])
-                else:
-                    cs = None
-
-                score_info = ScoreInfo(pp, accuracy, combo, ar, cs, speed)
-                beatmap = await Beatmap.from_id(beatmap_id)
-                beatmap_set = await BeatmapSet.from_id(beatmap.set_id)
-
-                score = Score(score_id, score_info, beatmap, beatmap_set)
-                db.add_score(score)
+        return await context.send(
+            embed=scores.embed(context.author),
+            view=ScoresButtons(context.author, scores)
+        )
 
     @commands.hybrid_command(
         name="scores_showcase",
