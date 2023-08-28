@@ -132,9 +132,6 @@ class Database:
 
         tracked_user_ids = self.cursor.fetchall()
 
-        if not tracked_user_ids:
-            return None
-
         tracked_users = []
 
         async with aiohttp.ClientSession() as session:
