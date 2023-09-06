@@ -1,12 +1,13 @@
 import asyncio
 import re
+import sys
 
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
 from score_showcaser.Database import Database
-from score_showcaser.buttons.Buttons import ProfileButtons, TrackedUsersButtons, ScoresButtons, AutoScoreButtons
+from score_showcaser.buttons.Buttons import ProfileButtons, ScoresButtons, AutoScoreButtons
 from score_showcaser.score.Beatmap import Beatmap
 from score_showcaser.score.BeatmapSet import BeatmapSet
 from score_showcaser.score.Mods import Mods
@@ -26,7 +27,8 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         description="Add scores from csv file with exact column titles (mods,map,accuracy,combo,pp)"
     )
     async def add_scores_csv(self, context: Context, scores_csv: discord.Attachment):
-        await context.send("Parsing scores from CSV... this may take a while... ")
+        await context.defer()
+
         scores = await ScoresCsvParser().parse_from_url(str(scores_csv), context.author)
 
         if not scores.scores:
@@ -34,7 +36,7 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
                                       "`mods,map,accuracy,combo,pp`")
 
         return await context.send(
-            embed=scores.embed(context.author),
+            embed=scores.embed(context.author.colour),
             view=ScoresButtons(context.author, scores)
         )
 
@@ -42,16 +44,32 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         name="scores_showcase",
         description="Displays a user's showcased scores",
     )
-    async def get_showcased_scores(self, context: Context, score_number=1):
-        scores = Database().get_scores(context.author.id, f"{context.author.name}'s Scores Showcase")
+    async def scores_showcase(self, context: Context, osu_id_or_username=None, score_number=1):
+        await context.defer()
+
+        db: Database = Database()
+
+        discord_id = context.author.id
+        discord_user = context.author
+
+        if osu_id_or_username:
+            discord_id = await db.get_discord_id(osu_id_or_username)
+
+            if not discord_id:
+                return await context.send(
+                    f"User `{osu_id_or_username}` needs to `/register` to make their score showcase public")
+
+            discord_user = await self.bot.fetch_user(discord_id)
+
+        scores = db.get_scores(discord_id, f"Scores Showcase for {str(discord_user)}")
 
         if not scores:
-            return await context.send(f"No scores added for `{context.author.name}` :(\n"
+            return await context.send(f"No scores added for `{str(discord_user)}` :(\n"
                                       f"`/add` to manually add a score\n"
                                       f"`/register` to get the option to add future `>rs` scores")
 
         return await context.send(
-            embed=scores.embed(context.author, score_number - 1),
+            embed=scores.embed(context.author.colour, score_number - 1),
             view=ScoresButtons(context.author, scores)
         )
 
@@ -59,55 +77,105 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         name="search_scores_showcase",
         description="Searches for scores",
     )
-    async def search_scores(self, context: Context, search_term: str):
-        scores = Database().get_scores(
-            context.author.id,
-            f"Scores matching search term {search_term} for {context.author.name}",
-            search_term
-        )
+    async def search_scores_showcase(self, context: Context, search_term: str, osu_id_or_username=None):
+        await context.defer()
+
+        db: Database = Database()
+
+        discord_id = context.author.id
+        discord_user = context.author
+
+        if osu_id_or_username:
+            discord_id = await db.get_discord_id(osu_id_or_username)
+
+            if not discord_id:
+                return await context.send(
+                    f"User `{osu_id_or_username}` needs to `/register` to make their score showcase public")
+
+            discord_user = await self.bot.fetch_user(discord_id)
+
+        scores = db.get_scores(discord_id, f"Search Term: `{search_term}` in {str(discord_user)}'s Scores Showcase",
+                               search_term)
 
         if not scores:
             return await context.send(f"No scores found for search term `{search_term}` :(")
 
         return await context.send(
-            embed=scores.embed(context.author),
+            embed=scores.embed(context.author.colour),
             view=ScoresButtons(context.author, scores)
         )
 
     @commands.hybrid_command(
-        name="tracked",
-        description="Gets tracked users",
+        name="backup",
+        description="Retrieve db"
     )
-    async def tracked(self, context, tracked_user_number=1):
-        db = Database()
-        profile = await db.get_user_profile(context.author.id)
-        tracked_users = await db.get_tracked_users(context.author.id)
+    async def backup(self, context: Context):
+        if context.author.id != 187907815711571977:
+            return await context.send("No permission.")
 
-        return await context.send(
-            embed=tracked_users.embed(context.author, profile, tracked_user_number - 1),
-            view=TrackedUsersButtons(context.author, profile, tracked_users)
-        )
+        return await context.send(file=discord.File(f"{sys.path[1]}/score_showcaser/score_tracker.db"))
+
+    @commands.hybrid_command(
+        name="what_if",
+        description="Shows the profile if a certain PP score was obtained"
+    )
+    async def what_if(self, context: Context, pp: int, osu_id_or_username=None):
+        await context.defer()
+
+        db: Database = Database()
+
+        discord_id = context.author.id
+        discord_user = context.author
+
+        if osu_id_or_username:
+            discord_id = await db.get_discord_id(osu_id_or_username)
+
+            if not discord_id:
+                return await context.send(
+                    f"User `{osu_id_or_username}` needs to `/register` for their stats to be publicly accessed")
+
+            discord_user = await self.bot.fetch_user(discord_id)
+
+        profile = await db.get_user_profile(discord_id, str(discord_user))
+
+        return await context.send(embed=profile.what_if(pp, str(discord_user), context.author.colour))
 
     @commands.hybrid_command(
         name="profile_showcase",
         description="Gets profile stats for showcased scores ONLY"
     )
-    async def profile(self, context: Context):
-        db = Database()
-        profile = await db.get_user_profile(context.author.id)
-        tracked_users = await db.get_tracked_users(context.author.id)
+    async def profile(self, context: Context, osu_id_or_username=None):
+        await context.defer()
+
+        db: Database = Database()
+
+        discord_id = context.author.id
+        discord_user = context.author
+
+        if osu_id_or_username:
+            discord_id = await db.get_discord_id(osu_id_or_username)
+
+            if not discord_id:
+                return await context.send(
+                    f"User `{osu_id_or_username}` needs to `/register` to make their profile public")
+
+            discord_user = await self.bot.fetch_user(discord_id)
+
+        profile = await db.get_user_profile(discord_id, str(discord_user))
 
         return await context.send(
-            embed=profile.embed(context.author),
-            view=ProfileButtons(context.author, profile, tracked_users)
+            embed=profile.embed(context.author.colour),
+            view=ProfileButtons(context.author, profile)
         )
 
     @commands.hybrid_command(
         name="add_score_manual",
         description="Adds a score (scores are uniquely identified by beatmap ID and mods)",
     )
-    async def manual_add_score(self, context: Context, beatmap_id: int, pp: float, accuracy: float, combo: int,
+    async def add_score_manual(self, context: Context, beatmap_id: int, pp: float, accuracy: float, combo: int,
                                mods=None, ar=None, cs=None, speed=None):
+
+        await context.defer()
 
         db = Database()
         mods = Mods(mods)
@@ -140,7 +208,7 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         db.add_score(score)
 
         return await context.send(
-            embed=score.embed(context.author, f"Score added to {context.author.name}'s scores showcase"),
+            embed=score.embed(context.author, f"Score Added to {context.author.name}'s Scores Showcase"),
         )
 
     @commands.hybrid_command(
@@ -148,6 +216,8 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         description="Register your account (this will give you the option to add >rs scores automatically)",
     )
     async def register(self, context: Context, osu_id_or_username):
+        await context.defer()
+
         try:
             user = await osu_api.user(osu_id_or_username, mode="osu")
         except ValueError:
@@ -157,6 +227,7 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
 
         return await context.send(f"Account linked to osu username: `{user.username}`\n"
                                   f"`>rs` will now provide an option to automatically add a score!\n"
+                                  f"Your scores showcase and stats will also be publicly accessible!\n"
                                   f"To change the osu username linked to your discord account, run this command again.")
 
     @commands.hybrid_command(
@@ -182,6 +253,8 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         description="Tracks a profile's PP"
     )
     async def track(self, context: Context, osu_id_or_username):
+        await context.defer()
+
         try:
             user = await osu_api.user(osu_id_or_username, mode="osu")
         except ValueError:
@@ -195,8 +268,10 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         name="add_score_auto",
         description="Add a score by ID (found on the score page)",
     )
-    async def auto_add_score(self, context: Context, score_id):
-        db = Database()
+    async def add_score_auto(self, context: Context, score_id):
+        await context.defer()
+
+        db: Database = Database()
 
         try:
             score = await osu_api.score(mode="osu", score_id=score_id)
@@ -212,13 +287,16 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         db.add_score(score)
 
         return await context.send(
-            embed=score.embed(context.author, f"Score added to {context.author.name}'s scores showcase"))
+            embed=score.embed(context.author, f"Score Added to {context.author.name}'s Scores Showcase")
+        )
 
     @commands.hybrid_command(
         name="untrack",
         description="Untrack osu player",
     )
     async def untrack(self, context: Context, osu_id_or_username):
+        await context.defer()
+
         try:
             user = await osu_api.user(osu_id_or_username, mode="osu")
         except ValueError:
@@ -294,7 +372,7 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         score = Score(score_id, score_info, beatmap, beatmap_set)
 
         return await context.send(
-            embed=score.embed(context.author, f"Add score to {context.author.name}'s scores showcase?"),
+            embed=score.embed(context.author, f"Add Score to {context.author.name}'s Scores Showcase?"),
             view=AutoScoreButtons(context.author, score)
         )
 

@@ -1,5 +1,4 @@
 import discord
-from discord import User
 
 
 class TrackedUsers:
@@ -11,9 +10,9 @@ class TrackedUsers:
     def count(self):
         return len(self.tracked_users)
 
-    def embed(self, user: User, profile, lower=0):
-        embed = discord.Embed(colour=user.colour)
-        embed.set_author(name=f"{user.name}'s Tracked Users", icon_url=user.avatar.url)
+    def embed(self, username, colour, profile, lower=0):
+        embed = discord.Embed(colour=colour)
+        embed.set_author(name=f"Tracked Users for {username}")
 
         for i, tracked_user in enumerate(self.tracked_users[lower:lower + TrackedUsers.USERS_PER_PAGE]):
             if i == 0:

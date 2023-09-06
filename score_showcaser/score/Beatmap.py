@@ -2,7 +2,7 @@ from wysibot import osu_api
 
 
 class Beatmap:
-    def __init__(self, id, version, difficulty_rating, max_combo, set_id):
+    def __init__(self, id=-1, version="", difficulty_rating=-1, max_combo=-1, set_id=-1):
         self.id = id
         self.version = version
         self.difficulty_rating = difficulty_rating

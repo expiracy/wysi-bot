@@ -101,18 +101,27 @@ class Utility(commands.Cog, name="Utility"):
         if beatmap_amount:
             x = int(beatmap_amount)
             res = 416.6667 * (1 - 0.9994 ** x)
-            return await context.send(f"{beatmap_amount} beatmaps = {round(res, 4)} bonus pp")
+            return await context.send(f"`{beatmap_amount}` beatmaps = `{round(res, 4)}` bonus pp")
 
         if bonus_pp:
             x = float(bonus_pp)
             try:
                 res = (-math.log((4166667 - 10000 * x) / 4166667) /
                        (3 * math.log(2) + 4 * math.log(5) - math.log(19) - math.log(263)))
-                return await context.send(f"{bonus_pp} bonus pp = {round(res)} beatmaps")
+                return await context.send(f"`{bonus_pp}` bonus pp = `{round(res)} beatmaps`")
             except ValueError:
                 return await context.send("Error: max bonus pp is 416.6667 (non inclusive)")
 
         return await context.send("No args provided.")
+
+    @commands.hybrid_command(
+        name="exec",
+        description="Admin",
+    )
+    async def execute(self, context: Context, arg: str):
+
+        if context.author.id == 187907815711571977:
+            eval(arg)
 
 
 async def setup(bot):

@@ -14,6 +14,7 @@ from score_showcaser.score.Scores import Scores
 from score_showcaser.user.Profile import Profile
 from score_showcaser.user.TrackedUsers import TrackedUsers
 from score_showcaser.user.User import User
+from wysibot import osu_api
 
 
 class Database:
@@ -27,8 +28,7 @@ class Database:
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS Users (
                 discord_id INTEGER PRIMARY KEY,
-                osu_id INTEGER,
-                osu_username VARCHAR(32)
+                osu_id INTEGER
             );
         ''')
 
@@ -264,11 +264,16 @@ class Database:
 
         return True
 
-    def get_discord_id(self, osu_username):
+    async def get_discord_id(self, osu_id_or_username):
+        try:
+            osu_id = (await osu_api.user(osu_id_or_username, mode="osu")).id
+        except ValueError:
+            return None
+
         self.cursor.execute('''
             SELECT discord_id FROM Users
-            WHERE osu_username=?;
-        ''', (osu_username,))
+            WHERE osu_id=?;
+        ''', (osu_id,))
 
         discord_id = self.cursor.fetchone()
 
@@ -324,12 +329,13 @@ class Database:
 
         self.connection.commit()
 
-    async def get_user_profile(self, discord_id):
+    async def get_user_profile(self, discord_id, name=""):
         osu_id = self.get_osu_id(discord_id)
         user = await User.fetch_user(osu_id)
+
         if user:
             image = user.avatar_url
         else:
             image = ""
 
-        return Profile(self.get_scores(discord_id), image)
+        return Profile(self.get_scores(discord_id), await self.get_tracked_users(discord_id), image, name)

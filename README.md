@@ -1,10 +1,13 @@
 # Score Showcase Bot for osu! (+ other random stuff)
 
 ## Overview
-This bot was developed for showcasing osu! scores. 
-It's designed to highlight the best non-high pp scores and enable users to compare profiles seperately from the main osu! servers. 
+
+This bot was developed for showcasing osu! scores.
+It's designed to highlight the best non-high pp scores and enable users to compare profiles seperately from the main
+osu! servers.
 
 ## Commands
+
 - `/register`: Automatically gives you the option to add scores from `>rs`.
 - `/unregister`: Stops giving you the `rs` add score option.
 - `/add_score_manual`: Allows you to manually add a score.
@@ -20,8 +23,9 @@ It's designed to highlight the best non-high pp scores and enable users to compa
 - `/roll`: Roll a number.
 - `/bonus_pp`: Calculate maps -> bonus pp or bonus pp -> maps.
 - `/add_scores_csv`: Adds scores from a CSV in the format `mods,map,combo,acc,pp`.
-  
+
 ## Getting Started
+
 1. Use the `/register` command to enable adding future scores from `>rs` automatically.
 2. Add your best non-high pp scores using the bot's commands (`/add_score_auto` or `/add_score_manual`).
 3. Use `/scores_showcase` to view all your showcased scores.
@@ -30,11 +34,13 @@ It's designed to highlight the best non-high pp scores and enable users to compa
 7. Have fun with the bot's various commands and features!
 
 ## Images
+
 ![scores_showcase](https://cdn.discordapp.com/attachments/1141528106390265916/1145121900679417896/image.png)
 ![add_score_rs](https://cdn.discordapp.com/attachments/1141528106390265916/1145121396779913388/image.png)
 ![tracked](https://cdn.discordapp.com/attachments/1141528106390265916/1145122186441523210/image.png)
 ![profile_showcase](https://cdn.discordapp.com/attachments/1141528106390265916/1145121699134705786/image.png)
 
 ## Bugs/Requests
+
 Message expiracy on Discord
 

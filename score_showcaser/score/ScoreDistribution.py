@@ -29,8 +29,9 @@ class ScoreDistribution:
 
         return scores_string
 
-    def embed(self, user):
-        embed = discord.Embed(colour=user.colour)
-        embed.set_author(name=f"{user.name}'s Score Type Distribution", icon_url=user.avatar.url)
+    def embed(self, username, colour):
+        embed = discord.Embed(title=f"Score Distribution for {username}", colour=colour)
+        embed.set_thumbnail(
+            url="https://cdn.w600.comps.canstockphoto.com/statistics-stock-illustrations_csp2073945.jpg")
         embed.add_field(name="", value=str(self), inline=False)
         return embed

@@ -1,6 +1,11 @@
 import discord
 from discord import User
 
+from score_showcaser.score.Beatmap import Beatmap
+from score_showcaser.score.BeatmapSet import BeatmapSet
+from score_showcaser.score.ScoreID import ScoreID
+from score_showcaser.score.ScoreInfo import ScoreInfo
+
 
 class Score:
     def __init__(self, id, info, beatmap, beatmap_set):
@@ -8,6 +13,10 @@ class Score:
         self.info = info
         self.beatmap = beatmap
         self.beatmap_set = beatmap_set
+
+    @staticmethod
+    def blank():
+        return Score(ScoreID(), ScoreInfo(), Beatmap(), BeatmapSet())
 
     def __str__(self):
         profile_link = f"https://osu.ppy.sh/b/{self.beatmap.id}"
@@ -23,8 +32,7 @@ class Score:
         return score_string
 
     def embed(self, user: User, title):
-        embed = discord.Embed(colour=user.colour)
-        embed.set_author(name=title, icon_url=user.avatar.url)
+        embed = discord.Embed(title=title, colour=user.colour)
         embed.set_thumbnail(url=self.beatmap_set.image)
         embed.add_field(name="", value=str(self), inline=False)
 

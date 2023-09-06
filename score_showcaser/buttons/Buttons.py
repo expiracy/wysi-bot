@@ -7,11 +7,10 @@ from score_showcaser.user.User import User
 
 
 class ProfileButtons(discord.ui.View):
-    def __init__(self, author, profile, tracked_users):
+    def __init__(self, author, profile):
         super().__init__()
         self.author = author
         self.profile = profile
-        self.tracked_users = tracked_users
 
     @discord.ui.button(
         label="Compare",
@@ -21,8 +20,8 @@ class ProfileButtons(discord.ui.View):
         if interaction.user.id != self.author.id: return
 
         return await interaction.response.edit_message(
-            embed=self.tracked_users.embed(self.author, self.profile, 0),
-            view=TrackedUsersButtons(self.author, self.profile, self.tracked_users)
+            embed=self.profile.tracked_users.embed(self.profile.username, self.author.colour, self.profile, 0),
+            view=TrackedUsersButtons(self.author, self.profile)
         )
 
     @discord.ui.button(
@@ -33,29 +32,28 @@ class ProfileButtons(discord.ui.View):
         if interaction.user.id != self.author.id: return
 
         return await interaction.response.edit_message(
-            embed=self.profile.score_distribution.embed(self.author),
+            embed=self.profile.score_distribution.embed(self.profile.username, self.author.colour),
             view=ScoreDistributionButtons(self.author, self.profile)
         )
 
 
 class TrackedUsersButtons(discord.ui.View):
-    def __init__(self, author, profile, tracked_users):
+    def __init__(self, author, profile):
         super().__init__()
         self.author = author
         self.profile = profile
-        self.tracked_users = tracked_users
         self.lower_index = 0
 
     @discord.ui.button(
-        label="My Profile",
+        label="Profile",
         style=discord.ButtonStyle.blurple,
     )
     async def profile(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id: return
 
         return await interaction.response.edit_message(
-            embed=self.profile.embed(self.author),
-            view=ProfileButtons(self.author, self.profile, self.tracked_users)
+            embed=self.profile.embed(self.author.colour),
+            view=ProfileButtons(self.author, self.profile)
         )
 
     @discord.ui.button(
@@ -67,8 +65,13 @@ class TrackedUsersButtons(discord.ui.View):
 
         self.lower_index = max(self.lower_index - TrackedUsers.USERS_PER_PAGE - 1, 0)
 
+        # TODO add disabling
+        if self.lower_index - TrackedUsers.USERS_PER_PAGE < 0:
+            button.disabled = True
+
         return await interaction.response.edit_message(
-            embed=self.tracked_users.embed(self.author, self.profile, self.lower_index),
+            embed=self.profile.tracked_users.embed(self.profile.username, self.author.colour, self.profile,
+                                                   self.lower_index),
             view=self
         )
 
@@ -79,11 +82,12 @@ class TrackedUsersButtons(discord.ui.View):
     async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id: return
 
-        self.lower_index = max(0, min(self.tracked_users.count() - TrackedUsers.USERS_PER_PAGE,
+        self.lower_index = max(0, min(self.profile.tracked_users.count() - TrackedUsers.USERS_PER_PAGE,
                                       self.lower_index + TrackedUsers.USERS_PER_PAGE - 1))
 
         return await interaction.response.edit_message(
-            embed=self.tracked_users.embed(self.author, self.profile, self.lower_index),
+            embed=self.profile.tracked_users.embed(self.profile.username, self.author.colour, self.profile,
+                                                   self.lower_index),
             view=self
         )
 
@@ -105,7 +109,7 @@ class ScoresButtons(discord.ui.View):
         self.lower_index = 0
 
         await interaction.response.edit_message(
-            embed=self.scores.embed(self.author, self.lower_index),
+            embed=self.scores.embed(self.author.colour, self.lower_index),
             view=self
         )
 
@@ -116,10 +120,10 @@ class ScoresButtons(discord.ui.View):
     async def last(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id: return
 
-        self.lower_index = max(self.lower_index - 4, 0)
+        self.lower_index = max(self.lower_index - 5, 0)
 
         await interaction.response.edit_message(
-            embed=self.scores.embed(self.author, self.lower_index),
+            embed=self.scores.embed(self.author.colour, self.lower_index),
             view=self
         )
 
@@ -133,7 +137,7 @@ class ScoresButtons(discord.ui.View):
         self.lower_index = max(0, min(self.scores.count() - 5, self.lower_index + 5))
 
         await interaction.response.edit_message(
-            embed=self.scores.embed(self.author, self.lower_index),
+            embed=self.scores.embed(self.author.colour, self.lower_index),
             view=self
         )
 
@@ -147,7 +151,7 @@ class ScoresButtons(discord.ui.View):
         self.lower_index = max(0, self.scores.count() - 5)
 
         await interaction.response.edit_message(
-            embed=self.scores.embed(self.author, self.lower_index),
+            embed=self.scores.embed(self.author.colour, self.lower_index),
             view=self
         )
 
@@ -159,15 +163,15 @@ class ScoreDistributionButtons(discord.ui.View):
         self.profile = profile
 
     @discord.ui.button(
-        label="My Profile",
+        label="Profile",
         style=discord.ButtonStyle.blurple,
     )
     async def far_last(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id: return
 
         await interaction.response.edit_message(
-            embed=self.profile.embed(self.author),
-            view=ProfileButtons(self.author, self.profile, await (Database().get_tracked_users(self.author.id)))
+            embed=self.profile.embed(self.author.colour),
+            view=ProfileButtons(self.author, self.profile)
         )
 
 

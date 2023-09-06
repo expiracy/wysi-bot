@@ -133,4 +133,4 @@ class ScoresCsvParser:
             db.add_score(score)
             scores_list.append(score)
 
-        return Scores(scores_list, f"Scores successfully parsed from CSV for user {user.name}")
+        return Scores(scores_list, f"Scores successfully parsed from CSV for user {user.username}")

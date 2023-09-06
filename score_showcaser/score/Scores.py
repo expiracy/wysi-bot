@@ -1,5 +1,4 @@
 import discord
-from discord import User
 
 
 class Scores:
@@ -9,13 +8,23 @@ class Scores:
         self.scores = scores
         self.title = title
 
+    def get(self):
+        return self.scores
+
+    def add(self, new_score):
+        for i, score in enumerate(self.scores):
+            if new_score.info.pp >= score.info.pp:
+                self.scores.insert(i, new_score)
+                break
+
+        return self
+
     def count(self):
         return len(self.scores)
 
-    def embed(self, user: User, lower=0):
+    def embed(self, colour, lower=0):
 
-        embed = discord.Embed(colour=user.colour)
-        embed.set_author(name=self.title, icon_url=user.avatar.url)
+        embed = discord.Embed(title=self.title, colour=colour)
 
         upper = lower + Scores.SCORES_PER_PAGE
 
