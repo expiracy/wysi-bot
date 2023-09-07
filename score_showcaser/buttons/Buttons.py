@@ -63,11 +63,7 @@ class TrackedUsersButtons(discord.ui.View):
     async def last(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id: return
 
-        self.lower_index = max(self.lower_index - TrackedUsers.USERS_PER_PAGE - 1, 0)
-
-        # TODO add disabling
-        if self.lower_index - TrackedUsers.USERS_PER_PAGE < 0:
-            button.disabled = True
+        self.lower_index = max(self.lower_index - 6, 0)
 
         return await interaction.response.edit_message(
             embed=self.profile.tracked_users.embed(self.profile.username, self.author.colour, self.profile,
@@ -82,8 +78,8 @@ class TrackedUsersButtons(discord.ui.View):
     async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id: return
 
-        self.lower_index = max(0, min(self.profile.tracked_users.count() - TrackedUsers.USERS_PER_PAGE,
-                                      self.lower_index + TrackedUsers.USERS_PER_PAGE - 1))
+        self.lower_index = max(0, min(self.profile.tracked_users.count() - 5,
+                                      self.lower_index + 6))
 
         return await interaction.response.edit_message(
             embed=self.profile.tracked_users.embed(self.profile.username, self.author.colour, self.profile,
