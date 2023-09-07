@@ -212,9 +212,10 @@ class Database:
                        version, difficulty, max_combo, 
                        Beatmaps.beatmap_set_id, title, artist, image, mapper 
                FROM Scores, Beatmaps, BeatmapSets
-               WHERE discord_id=? AND Scores.beatmap_id=Beatmaps.beatmap_id AND Beatmaps.beatmap_set_id=BeatmapSets.beatmap_set_id AND title LIKE '%' || ? || '%'
+               WHERE discord_id=? AND Scores.beatmap_id=Beatmaps.beatmap_id AND Beatmaps.beatmap_set_id=BeatmapSets.beatmap_set_id 
+                     AND (LOWER(title) LIKE '%' || ? || '%' OR LOWER(mapper) LIKE ? || '%')
                ORDER BY PP DESC, accuracy DESC;
-           ''', (discord_id, search_term))
+           ''', (discord_id, search_term, search_term))
         else:
             self.cursor.execute('''
                 SELECT Scores.beatmap_id, mods, pp, accuracy, combo, ar, cs, speed,

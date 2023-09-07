@@ -95,7 +95,7 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
             discord_user = await self.bot.fetch_user(discord_id)
 
         scores = db.get_scores(discord_id, f"Search Term: `{search_term}` in {str(discord_user)}'s Scores Showcase",
-                               search_term)
+                               search_term.lower())
 
         if not scores:
             return await context.send(f"No scores found for search term `{search_term}` :(")
