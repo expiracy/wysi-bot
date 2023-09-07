@@ -228,9 +228,6 @@ class Database:
 
         scores = self.cursor.fetchall()
 
-        if not scores:
-            return None
-
         scores = [Score(ScoreID(discord_id, beatmap_id, Mods(mods)),
                         ScoreInfo(pp, accuracy, combo, ar, cs, speed),
                         Beatmap(beatmap_id, version, difficulty, max_combo, beatmap_set_id),
@@ -334,9 +331,20 @@ class Database:
         osu_id = self.get_osu_id(discord_id)
         user = await User.fetch_user(osu_id)
 
+        image = ""
+
         if user:
             image = user.avatar_url
-        else:
-            image = ""
 
-        return Profile(self.get_scores(discord_id), await self.get_tracked_users(discord_id), image, name)
+        scores = self.get_scores(discord_id)
+        tracked_users = await self.get_tracked_users(discord_id)
+
+        return Profile(scores, tracked_users, image, name)
+
+    def remove_all_tracked(self, discord_id):
+        self.cursor.execute('''
+            DELETE FROM Tracking
+            WHERE discord_id=?;
+        ''', (discord_id,))
+
+        self.connection.commit()

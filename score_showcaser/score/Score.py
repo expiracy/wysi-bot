@@ -19,8 +19,8 @@ class Score:
         return Score(ScoreID(), ScoreInfo(), Beatmap(), BeatmapSet())
 
     def __str__(self):
-        profile_link = f"https://osu.ppy.sh/b/{self.beatmap.id}"
-        score_string = f"[**{self.beatmap_set.title}**]({profile_link}) [{self.beatmap.version}] + **{str(self.id.mods)}**"
+        beatmap_link = f"https://osu.ppy.sh/b/{self.beatmap.id}"
+        score_string = f"[**{self.beatmap_set.title}**]({beatmap_link}) ({self.beatmap.id}) [{self.beatmap.version}] + **{str(self.id.mods)}**"
 
         if self.info.speed:
             score_string += f" **({self.info.speed}x)**"

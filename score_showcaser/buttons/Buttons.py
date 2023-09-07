@@ -2,7 +2,6 @@ import discord
 
 from score_showcaser.Database import Database
 from score_showcaser.score.Scores import Scores
-from score_showcaser.user.TrackedUsers import TrackedUsers
 from score_showcaser.user.User import User
 
 
@@ -78,8 +77,7 @@ class TrackedUsersButtons(discord.ui.View):
     async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.author.id: return
 
-        self.lower_index = max(0, min(self.profile.tracked_users.count() - 5,
-                                      self.lower_index + 6))
+        self.lower_index = max(0, min(self.profile.tracked_users.count() - 5, self.lower_index + 5))
 
         return await interaction.response.edit_message(
             embed=self.profile.tracked_users.embed(self.profile.username, self.author.colour, self.profile,

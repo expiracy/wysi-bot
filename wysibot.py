@@ -21,7 +21,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(
-    command_prefix=config['prefix'],
+    command_prefix=config['prefix'] + [">"],
     intents=intents,
 )
 

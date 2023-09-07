@@ -15,7 +15,7 @@ from score_showcaser.score.Score import Score
 from score_showcaser.score.ScoreID import ScoreID
 from score_showcaser.score.ScoreInfo import ScoreInfo
 from score_showcaser.score.ScoresCsvParser import ScoresCsvParser
-from wysibot import osu_api
+from wysibot import osu_api, config
 
 
 class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
@@ -23,7 +23,8 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         self.bot = bot
 
     @commands.hybrid_command(
-        name="add_scores_csv",
+        name="add_csv",
+        aliases=["addcsv"],
         description="Add scores from csv file with exact column titles (mods,map,accuracy,combo,pp)"
     )
     async def add_scores_csv(self, context: Context, scores_csv: discord.Attachment):
@@ -41,10 +42,14 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         )
 
     @commands.hybrid_command(
-        name="scores_showcase",
+        name="scores",
+        aliases=["s", "S"],
         description="Displays a user's showcased scores",
     )
-    async def scores_showcase(self, context: Context, osu_id_or_username=None, score_number=1):
+    async def scores(self, context: Context, osu_id_or_username=None, score_number=1):
+        if context.prefix not in config["prefix"]:
+            return
+
         await context.defer()
 
         db: Database = Database()
@@ -63,10 +68,10 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
 
         scores = db.get_scores(discord_id, f"Scores Showcase for {str(discord_user)}")
 
-        if not scores:
-            return await context.send(f"No scores added for `{str(discord_user)}` :(\n"
-                                      f"`/add` to manually add a score\n"
-                                      f"`/register` to get the option to add future `>rs` scores")
+        if scores.count() == 0:
+            return await context.send(
+                embed=scores.embed(context.author.colour),
+            )
 
         return await context.send(
             embed=scores.embed(context.author.colour, score_number - 1),
@@ -74,10 +79,14 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         )
 
     @commands.hybrid_command(
-        name="search_scores_showcase",
-        description="Searches for scores",
+        name="search",
+        aliases=["c", "C"],
+        description="Searches for scores within a scores showcase matching a title or the artist",
     )
-    async def search_scores_showcase(self, context: Context, search_term: str, osu_id_or_username=None):
+    async def search_scores(self, context: Context, search_term="", osu_id_or_username=None):
+        if context.prefix not in config["prefix"]:
+            return
+
         await context.defer()
 
         db: Database = Database()
@@ -110,16 +119,20 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         description="Retrieve db"
     )
     async def backup(self, context: Context):
-        if context.author.id != 187907815711571977:
+        if context.author.id not in config["owners"]:
             return await context.send("No permission.")
 
         return await context.send(file=discord.File(f"{sys.path[1]}/score_showcaser/score_tracker.db"))
 
     @commands.hybrid_command(
         name="what_if",
-        description="Shows the profile if a certain PP score was obtained"
+        aliases=["whatif"],
+        description="Shows the PP changes to a scores showcase profile"
     )
     async def what_if(self, context: Context, pp: int, osu_id_or_username=None):
+        if context.prefix not in config["prefix"]:
+            return
+
         await context.defer()
 
         db: Database = Database()
@@ -141,7 +154,8 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         return await context.send(embed=profile.what_if(pp, str(discord_user), context.author.colour))
 
     @commands.hybrid_command(
-        name="profile_showcase",
+        name="profile",
+        aliases=["p", "P"],
         description="Gets profile stats for showcased scores ONLY"
     )
     async def profile(self, context: Context, osu_id_or_username=None):
@@ -169,7 +183,8 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         )
 
     @commands.hybrid_command(
-        name="add_score_manual",
+        name="add_manual",
+        aliases=["addm"],
         description="Adds a score (scores are uniquely identified by beatmap ID and mods)",
     )
     async def add_score_manual(self, context: Context, beatmap_id: int, pp: float, accuracy: float, combo: int,
@@ -231,10 +246,12 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
                                   f"To change the osu username linked to your discord account, run this command again.")
 
     @commands.hybrid_command(
-        name="remove_score",
+        name="remove",
         description="Removes a score (scores are uniquely identified by beatmap ID and mods)"
     )
     async def remove_score(self, context: Context, beatmap_id: int, mods=None):
+        await context.defer()
+
         db = Database()
 
         mods = Mods(mods)
@@ -265,7 +282,8 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         return await context.send(f"Tracking user: `{user.username}`! (to untrack, use `/untrack`)")
 
     @commands.hybrid_command(
-        name="add_score_auto",
+        name="add_auto",
+        aliases=["adda"],
         description="Add a score by ID (found on the score page)",
     )
     async def add_score_auto(self, context: Context, score_id):
@@ -292,30 +310,39 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
 
     @commands.hybrid_command(
         name="untrack",
-        description="Untrack osu player",
+        description="Untrack osu player/all players",
     )
-    async def untrack(self, context: Context, osu_id_or_username):
+    async def untrack(self, context: Context, osu_id_or_username=None, all=False):
         await context.defer()
+
+        db: Database = Database()
+
+        if all:
+            db.remove_all_tracked(context.author.id)
+            return await context.send(f"Untracked all users!")
+
+        if not osu_id_or_username:
+            return await context.send(f"No arg provided :(")
 
         try:
             user = await osu_api.user(osu_id_or_username, mode="osu")
         except ValueError:
             return await context.send(f"Invalid argument provided: `{osu_id_or_username}` :(")
 
-        Database().remove_tracked(context.author.id, user.id)
+        db.remove_tracked(context.author.id, user.id)
         return await context.send(f"Untracked user: `{user.username}`!")
 
     @commands.hybrid_command(
-        name="remove_all_scores",
+        name="clear",
         description="Removes ALL recorded scores (CANNOT BE UNDONE)",
     )
-    async def always_fc(self, context: Context):
+    async def remove_all_scores(self, context: Context):
         Database().remove_scores(context.author.id)
         return await context.send(f"All scores removed for user `{context.author.name}`")
 
     @commands.hybrid_command(
         name="unregister",
-        description="Will unregister you from the best bot",
+        description="Stop receiving auto add score prompt + your showcase profile will be private",
     )
     async def unregister(self, context: Context):
         Database().remove_user(context.author.id)
@@ -323,8 +350,10 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
 
     @commands.command(
         name="rs",
+        aliases=["RS", "Rs", "rS"]
     )
     async def rs_add_score(self, context: Context, arg=None):
+        await context.defer()
         db = Database()
 
         osu_id = db.get_osu_username(context.author.id)
@@ -347,9 +376,6 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
 
         score_embed = rs_message.embeds[0]
         score_info = score_embed.description[1:].split('▸')
-
-        if score_info[0][12] == 'F':
-            return
 
         pp = float(re.findall("\d+.\d+PP", score_info[1])[0][:-2])
         accuracy = float(re.findall("\d+.\d+%", score_info[2])[0][:-1])

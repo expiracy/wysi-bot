@@ -17,6 +17,9 @@ class Scores:
                 self.scores.insert(i, new_score)
                 break
 
+        if not self.scores:
+            self.scores = [new_score]
+
         return self
 
     def count(self):
@@ -33,5 +36,11 @@ class Scores:
                 embed.set_thumbnail(url=score.beatmap_set.image)
 
             embed.add_field(name="", value=f"**{i + lower + 1})** {str(score)}", inline=False)
+
+        if not self.scores:
+            embed.add_field(
+                name="",
+                value="**No scores added :(**\n"
+                      "Please see https://github.com/expiracy/wysi-bot for a list of commands")
 
         return embed

@@ -8,21 +8,22 @@ osu! servers.
 
 ## Commands
 
-- `/register`: Automatically gives you the option to add scores from `>rs`.
-- `/unregister`: Stops giving you the `rs` add score option.
-- `/add_score_manual`: Allows you to manually add a score.
-- `/add_score_auto`: Allows you to add a score via score ID.
-- `/scores_showcase`: Shows all your showcased scores.
-- `/search_scores_showcase`: Searches your showcased scores.
-- `/tracked`: Allows you to compare your showcase profile's accuracy and pp to other users' real profiles.
-- `/track`: Adds a user to show on `/tracked`
+- `/register`: Automatically gives you the option to add scores from `>rs` and makes your scores showcase public to
+  other users.
+- `/unregister`: Stops giving you the `>rs` add score option.
+- `/add_manual` or `-addm`: Allows you to manually add a score.
+- `/add_auto` or `-adda`: Allows you to add a score via score ID.
+- `/add_csv` or `-addcsv`: Adds scores from a CSV in the format `mods,map,combo,acc,pp`.
+- `/scores` or `-s`: Shows all your showcased scores.
+- `/search` or `-c`: Searches your showcased scores.
+- `/profile` or `-p`: Shows your profile based only on showcased scores.
+- `/track`: Adds a user to show on the `COMPARE` section of `/profile-ss`
 - `/untrack`: Untracks a user.
-- `/profile_showcase`: Shows your profile based only on showcased scores.
-- `/remove_all_scores`: Removes all showcased scores.
+- `/clear`: Removes all showcased scores.
+- `/what_if` or `-whatif`: Returns the theoretical new PP and compares it to the old PP for a profile.
 - `/leah_kate`: L*ah Kte
 - `/roll`: Roll a number.
 - `/bonus_pp`: Calculate maps -> bonus pp or bonus pp -> maps.
-- `/add_scores_csv`: Adds scores from a CSV in the format `mods,map,combo,acc,pp`.
 
 ## Getting Started
 

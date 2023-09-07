@@ -11,8 +11,11 @@ class TrackedUsers:
         return len(self.tracked_users)
 
     def embed(self, username, colour, profile, lower=0):
-        embed = discord.Embed(colour=colour)
-        embed.set_author(name=f"Tracked Users for {username}")
+        embed = discord.Embed(title=f"Tracked Users for {username}", colour=colour)
+
+        if not self.tracked_users:
+            tracked_user_string = ("**No tracked users :(**\n"
+                                   "Use `/track` to track a user's osu! profile")
 
         for i, tracked_user in enumerate(self.tracked_users[lower:lower + TrackedUsers.USERS_PER_PAGE]):
             if i == 0:
@@ -25,6 +28,6 @@ class TrackedUsers:
                                    f"**PP:** {user_pp} ({round(user_pp - profile.weighted_pp, 2):+} PP)\n"
                                    f"**Accuracy:** {round(user_acc, 2)} % ({round(user_acc - profile.accuracy, 2):+} %)")
 
-            embed.add_field(name="", value=tracked_user_string, inline=False)
+        embed.add_field(name="", value=tracked_user_string, inline=False)
 
         return embed
