@@ -1,4 +1,5 @@
 import asyncio
+import os.path
 import re
 import sys
 
@@ -122,7 +123,7 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         if context.author.id not in config["owners"]:
             return await context.send("No permission.")
 
-        return await context.send(file=discord.File(f"{sys.path[1]}/score_showcaser/score_tracker.db"))
+        return await context.send(file=discord.File(os.path.join('score_showcaser', 'score_tracker.db')))
 
     @commands.hybrid_command(
         name="what_if",

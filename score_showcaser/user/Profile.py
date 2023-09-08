@@ -30,7 +30,7 @@ class Profile:
         new_profile = Profile(self.scores.add(new_score), self.tracked_users, self.image, username)
         new_pp = new_profile.weighted_pp
 
-        embed = discord.Embed(title=f"If {username} got a {extra_pp} PP Score...", colour=colour)
+        embed = discord.Embed(title=f"If {username} got a {extra_pp} PP score...", colour=colour)
         embed.add_field(name="",
                         value=f"**Old PP:** {old_pp}\n**New PP:** {new_pp} PP\n**Change:** {round(new_pp - old_pp, 2):+} PP",
                         inline=False)

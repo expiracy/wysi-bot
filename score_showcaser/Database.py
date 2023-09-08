@@ -314,7 +314,7 @@ class Database:
 
     def add_user(self, discord_id, osu_id):
         self.cursor.execute('''
-            INSERT OR REPLACE INTO Users
+            INSERT OR REPLACE INTO Users(discord_id, osu_id)
             VALUES (?, ?);
         ''', (discord_id, osu_id))
 
