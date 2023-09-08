@@ -19,7 +19,8 @@ from wysibot import osu_api
 
 class Database:
     def __init__(self):
-        self.connection = sqlite3.connect(f'score_showcaser\\score_tracker.db')
+        db_path = os.path.join('score_showcaser', 'score_tracker.db')
+        self.connection = sqlite3.connect(db_path)
         self.cursor = self.connection.cursor()
 
         self.create_tables()
