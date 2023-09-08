@@ -314,7 +314,7 @@ class Database:
     def add_user(self, discord_id, osu_id):
         self.cursor.execute('''
             INSERT OR REPLACE INTO Users
-            VALUES (?, ?, ?);
+            VALUES (?, ?);
         ''', (discord_id, osu_id))
 
         self.connection.commit()
