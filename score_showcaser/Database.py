@@ -19,7 +19,7 @@ from wysibot import osu_api
 
 class Database:
     def __init__(self):
-        self.connection = sqlite3.connect(f'{os.path.dirname(__file__)}/score_tracker.db')
+        self.connection = sqlite3.connect(f'score_showcaser\\score_tracker.db')
         self.cursor = self.connection.cursor()
 
         self.create_tables()
@@ -311,11 +311,11 @@ class Database:
 
         return username[0]
 
-    def add_user(self, discord_id, osu_id, osu_username):
+    def add_user(self, discord_id, osu_id):
         self.cursor.execute('''
             INSERT OR REPLACE INTO Users
             VALUES (?, ?, ?);
-        ''', (discord_id, osu_id, osu_username))
+        ''', (discord_id, osu_id))
 
         self.connection.commit()
 

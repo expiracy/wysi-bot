@@ -238,7 +238,7 @@ class ScoreDisplayer(commands.Cog, name="ScoreDisplayer"):
         except ValueError:
             return await context.send(f"Invalid argument provided: `{osu_id_or_username}` :(")
 
-        Database().add_user(context.author.id, user.id, user.username)
+        Database().add_user(context.author.id, user.id)
 
         return await context.send(f"Account linked to osu username: `{user.username}`\n"
                                   f"`>rs` will now provide an option to automatically add a score!\n"

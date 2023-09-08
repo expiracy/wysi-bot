@@ -9,7 +9,7 @@ from ossapi import OssapiAsync
 # https://discord.com/api/oauth2/authorize?client_id=1013216514532454450&permissions=49469432790903&scope=applications.commands%20bot
 
 try:
-    with open(f"{os.path.dirname(__file__)}\\config.json", 'r') as json_file:
+    with open(f"config.json", 'r') as json_file:
         config = json.load(json_file)
 
 except IOError as e:
@@ -30,7 +30,7 @@ osu_api = OssapiAsync(config["client_id"], config["client_secret"])
 
 @bot.event
 async def on_ready():
-    for file in os.listdir(f"{os.path.dirname(__file__)}\\cogs"):
+    for file in os.listdir(f"cogs"):
         if file.endswith(".py"):
             extension = file[:-3]
             try:
